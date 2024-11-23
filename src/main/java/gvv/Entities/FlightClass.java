@@ -1,5 +1,8 @@
 package gvv.Entities;
 
 public enum FlightClass {
-    ECONOMY
+    ECONOMY,
+    PREMIUM_ECONOMY,
+    BUSINESS,
+    FIRST
 }
