@@ -3,6 +3,7 @@ package gvv;
 import gvv.Entities.FlightOneWayData;
 import gvv.Entities.FlightClass;
 import gvv.Entities.FlightRoundTripData;
+import org.example.Flight;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -49,8 +50,15 @@ public class WebScrapping {
      * APENAS ATÉ OS VOOS DE HOJE A 29 DIAS.
      */
 
-    private static Map<String, List<String>> FLIGHTS = new HashMap<>() {{
-        put("OPO", List.of("LIS"));
+    private static Map<String, List<String[]>> FLIGHTS = new HashMap<>() {{
+        put("OPO", List.of(
+                new String[]{"LIS", "Humberto Delgado Airport"},
+                new String[]{"DPS", "Ngurah Rai International Airport"},
+                new String[]{"HND", "Tokyo Haneda Airport"},
+                new String[]{"ICN", "Incheon International Airport"},
+                new String[]{"GIG", "Rio de Janeiro/Galeao International Airport"},
+                new String[]{"ANR", "Antwerp International Airport"}
+        ));
     }};
 
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -67,25 +75,19 @@ public class WebScrapping {
         LocalDateTime returnDate = LocalDateTime.now().plusDays(33);
 
 
-        String departureCity = "OPO";
-        String arrivalCity = "LIS";
         final int adultsQt = 1;
-        webscrapRoundTrip(departureCity, arrivalCity, ROUND_TRIP_URL
-                        .replace("{{DEPARTURE_CITY_CODE}}", departureCity)
-                        .replace("{{ARRIVAL_CITY_CODE}}", arrivalCity)
-                        .replace("{{ADULTS_QUANTITY}}", String.valueOf(adultsQt))
-                        .replace("{{FLIGHT_CLASS}}", FlightClass.ECONOMY.name().toUpperCase())
-                        .replace("{{DEPARTURE_DATE}}", currentDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                        .replace("{{RETURN_DATE}}", returnDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
 
-                , currentDate, returnDate
-        );
-        if(true) return;
-        for (String departure : FLIGHTS.keySet()) {
-            for (String destination : FLIGHTS.get(departure)) {
+        List<FlightOneWayData> oneWay = new ArrayList<>();
+        List<FlightRoundTripData> roundTrip = new ArrayList<>();
+
+        for (String departureCityAirport : FLIGHTS.keySet()) {
+            String departure = departureCityAirport.split(" - ")[0];
+            for (String[] destinationArr : FLIGHTS.get(departure)) {
+                String destination = destinationArr[0];
+                String airportName = destinationArr[1];
                 for (FlightClass flightClass : FlightClass.values()) {
 
-                    List<FlightOneWayData> data = webscrapOneWay(departure, destination,
+                    oneWay.addAll(webscrapOneWay(departure, destination,
                             ONE_WAY_URL
                                     .replace("{{DEPARTURE_CITY_CODE}}", departure)
                                     .replace("{{ARRIVAL_CITY_CODE}}", destination)
@@ -96,14 +98,38 @@ public class WebScrapping {
                     ).stream().peek(flightData -> {
                         flightData.setFlightClass(flightClass);
                         flightData.setAdults(adultsQt);
-                    }).toList();
-                    System.out.println();
+                    }).toList());
+                    roundTrip.addAll(webscrapRoundTrip(departure, destination, ROUND_TRIP_URL
+                                    .replace("{{DEPARTURE_CITY_CODE}}", departure)
+                                    .replace("{{ARRIVAL_CITY_CODE}}", destination)
+                                    .replace("{{ADULTS_QUANTITY}}", String.valueOf(adultsQt))
+                                    .replace("{{FLIGHT_CLASS}}", FlightClass.ECONOMY.name().toUpperCase())
+                                    .replace("{{DEPARTURE_DATE}}", currentDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                    .replace("{{RETURN_DATE}}", returnDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                            , currentDate, returnDate
+                    ).stream().peek(flightData -> {
+                        flightData.setDepartureCity(departure);
+                        flightData.setDepartureCity(destination);
+                        flightData.getFlightOutward().setFlightClass(flightClass);
+                        flightData.getFlightOutward().setAdults(adultsQt);
+
+                        flightData.getFlightReturn().setFlightClass(flightClass);
+                        flightData.getFlightReturn().setAdults(adultsQt);
+
+                    }).toList());
                 }
             }
         }
+
+        oneWay.forEach(System.out::println);
+        roundTrip.forEach(System.out::println);
+
     }
 
     public static ArrayList<FlightOneWayData> webscrapOneWay(String departure, String destination, String request_url, LocalDateTime date) {
+
+        System.out.printf("Processing flights from %s to %s, on OneWay, for the date %s %n", departure, destination, date.format(DATE_TIME_FORMATTER));
 
         HashMap<Integer, ArrayList<FlightOneWayData>> flights = new HashMap<>();
         WebDriver driver = getWebDriver();
@@ -138,7 +164,6 @@ public class WebScrapping {
             flights.put(page, new ArrayList<>());
             url = request_url.replace("{{PAGE_NUMBER}}", String.valueOf(page));
             driver.get(url);
-            System.out.println("[");
             try {
                 List<WebElement> flightElements = driver.findElements(By.xpath("//li[contains(@class, 'List-module__item___TMd8E List-module__item--spacing-medium___foMk1')]"));
                 Integer currentPage = page;
@@ -173,17 +198,12 @@ public class WebScrapping {
                             flight.setOriginalPrice(Double.parseDouble(priceElement.split("\n")[0]));
                             flight.setDiscountPrice(Double.parseDouble(priceElement.split("\n")[1]));
                         } else flight.setOriginalPrice(Double.parseDouble(priceElement));
-
-
-
                         flights.get(currentPage).add(flight);
                     } catch (Exception ex) {
                         System.err.println("Exception on iteration");
                         ex.printStackTrace();
                     }
                 });
-
-
 
                 // Abrir o modal e adquirir os dados extra necessários
                 flights.get(currentPage).forEach(flight -> {
@@ -199,61 +219,61 @@ public class WebScrapping {
                         ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
                         selectFlightButton.click();
 
+
+                        Thread.sleep(2000);
                         List<WebElement> stopElements = driver.findElements(By.xpath("//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')]"));
 
                         for (int c = 1; c <= stopElements.size(); c++) {
-                            if ("N".equalsIgnoreCase(flight.getIsDirect())) {
-                                FlightOneWayData stop = new FlightOneWayData();
 
-                                String departureCity = driver.findElement(By.xpath(String.format("(//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')])[%d]//div[contains(@class, 'Frame-module__padding-bottom_4___i8mtx Frame-module__padding-left_8___ZOqOO')]//div[@data-testid='timeline_location_airport_departure']", c))).getText().split(" ")[0];
-                                String destinationCity = driver.findElement(By.xpath(String.format("(//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')])[%d]//div[contains(@class, 'Frame-module__padding-left_8___ZOqOO')]//div[@data-testid='timeline_location_airport_arrival']", c))).getText().split(" ")[0];
+                            try {
+                                if ("N".equalsIgnoreCase(flight.getIsDirect())) {
+                                    FlightOneWayData stop = new FlightOneWayData();
 
-                                stop.setDepartureCity(departureCity);
-                                stop.setDestinationCity(destinationCity);
+                                    String departureCity = driver.findElement(By.xpath(String.format("(//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')])[%d]//div[contains(@class, 'Frame-module__padding-bottom_4___i8mtx Frame-module__padding-left_8___ZOqOO')]//div[@data-testid='timeline_location_airport_departure']", c))).getText().split(" ")[0];
+                                    String destinationCity = driver.findElement(By.xpath(String.format("(//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')])[%d]//div[contains(@class, 'Frame-module__padding-left_8___ZOqOO')]//div[@data-testid='timeline_location_airport_arrival']", c))).getText().split(" ")[0];
 
-                                String departureDateText = driver.findElement(By.xpath(String.format("(//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')])[%d]//div[@data-testid='timeline_location_timestamp_departure']", c))).getText();
-                                String destinationDateText = driver.findElement(By.xpath(String.format("(//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')])[%d]//div[@data-testid='timeline_location_timestamp_arrival']", c))).getText();
+                                    stop.setDepartureCity(departureCity);
+                                    stop.setDestinationCity(destinationCity);
 
-                                stop.setDepartureDate(LocalDateTime.of(date.getYear(), getMonth(departureDateText.split(" ")[2]), Integer.parseInt(departureDateText.split(" ")[1]), Integer.parseInt(departureDateText.split(" ")[4].split(":")[0]), Integer.parseInt(departureDateText.split(" ")[4].split(":")[1])));
-                                stop.setDestinationDate(LocalDateTime.of(date.getYear(), getMonth(destinationDateText.split(" ")[2]), Integer.parseInt(destinationDateText.split(" ")[1]), Integer.parseInt(destinationDateText.split(" ")[4].split(":")[0]), Integer.parseInt(destinationDateText.split(" ")[4].split(":")[1])));
+                                    String departureDateText = driver.findElement(By.xpath(String.format("(//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')])[%d]//div[@data-testid='timeline_location_timestamp_departure']", c))).getText();
+                                    String destinationDateText = driver.findElement(By.xpath(String.format("(//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')])[%d]//div[@data-testid='timeline_location_timestamp_arrival']", c))).getText();
+
+                                    stop.setDepartureDate(LocalDateTime.of(date.getYear(), getMonth(departureDateText.split(" ")[2]), Integer.parseInt(departureDateText.split(" ")[1]), Integer.parseInt(departureDateText.split(" ")[4].split(":")[0]), Integer.parseInt(departureDateText.split(" ")[4].split(":")[1])));
+                                    stop.setDestinationDate(LocalDateTime.of(date.getYear(), getMonth(destinationDateText.split(" ")[2]), Integer.parseInt(destinationDateText.split(" ")[1]), Integer.parseInt(destinationDateText.split(" ")[4].split(":")[0]), Integer.parseInt(destinationDateText.split(" ")[4].split(":")[1])));
 
 
-                                stop.setCompanyName(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_leg_info_carrier'])[%d]", c))).getText());
+                                    stop.setCompanyName(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_leg_info_carrier'])[%d]", c))).getText());
 
 
-                                stop.setAirPlaneNumber(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_leg_info_flight_number_and_class'])[%d]", c))).getText().split(" ")[0]);
-                                flight.addStop(stop);
-                            } else {
-                                flight.setAirPlaneNumber(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_leg_info_flight_number_and_class'])[%d]", c))).getText().split(" ")[0]);
+                                    stop.setAirPlaneNumber(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_leg_info_flight_number_and_class'])[%d]", c))).getText().split(" ")[0]);
+                                    flight.addStop(stop);
+                                } else {
+                                    flight.setAirPlaneNumber(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_leg_info_flight_number_and_class'])[%d]", c))).getText().split(" ")[0]);
+                                }
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                doNothingToHaveABreakPoint();
                             }
                         }
+
                         WebElement closeButton = driver.findElement(By.xpath("//div[contains(@class, 'Overlay-module__content___+pCjC')]//button[@aria-label='Close']"));
                         closeButton.click();
                     } catch (Exception e) {
                         e.printStackTrace();
-                        System.out.println();
+                        doNothingToHaveABreakPoint();
                     }
-                    System.out.printf("%s at %s until %s e o mesmo %s direto, com um preço de %s%s. Tem um total de %d escalas%s. %n",
-                            flight.getCompanyName(),
-                            flight.getDepartureDate().format(DATE_TIME_FORMATTER),
-                            flight.getDestinationDate().format(DATE_TIME_FORMATTER),
-                            "Y".equalsIgnoreCase(flight.getIsDirect()) ? "é" : "não é",
-                            flight.getDiscountPrice() != null ? DECIMAL_FORMAT.format(flight.getDiscountPrice()) : DECIMAL_FORMAT.format(flight.getOriginalPrice()),
-                            flight.getDiscountPrice() != null ? " (antes era " + DECIMAL_FORMAT.format(flight.getOriginalPrice()) + " €)" : "",
-                            flight.getStops().size(),
-                            !flight.getStops().isEmpty() ? " (" + String.join(", ", flight.getStops().stream().map(FlightOneWayData::getAirPlaneNumber).toList()) + ")" : " no avião " + flight.getAirPlaneNumber()
-                    );
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(5000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
+                        doNothingToHaveABreakPoint();
                     }
                 });
             } catch (Exception ex) {
                 ex.printStackTrace();
+                doNothingToHaveABreakPoint();
             }
         }
-        System.out.println("]");
         driver.close();
         return flights.values().stream()
                 .flatMap(Collection::stream)
@@ -263,6 +283,7 @@ public class WebScrapping {
     public static ArrayList<FlightRoundTripData> webscrapRoundTrip(String departure, String destination, String request_url, LocalDateTime date, LocalDateTime returnDate) {
         HashMap<Integer, ArrayList<FlightRoundTripData>> flights = new HashMap<>();
         WebDriver driver = getWebDriver();
+        System.out.printf("Processing flights from %s to %s, on RoundTrip, for the date %s until %s.%n", departure, destination, date.format(DATE_TIME_FORMATTER), returnDate.format(DATE_TIME_FORMATTER));
 
         // Adquirir páginas
         Integer totalPages = null;
@@ -284,6 +305,7 @@ public class WebScrapping {
             }
         } catch(Exception ex) {
             ex.printStackTrace();
+            doNothingToHaveABreakPoint();
         }
         if(totalPages == null) return new ArrayList<>();
 
@@ -292,7 +314,6 @@ public class WebScrapping {
             flights.put(page, new ArrayList<>());
             url = request_url.replace("{{PAGE_NUMBER}}", String.valueOf(page));
             driver.get(url);
-
             try {
                 List<WebElement> flightElements = driver.findElements(By.xpath("//li[contains(@class, 'List-module__item___TMd8E List-module__item--spacing-medium___foMk1')]"));
                 Integer currentPage = page;
@@ -330,8 +351,6 @@ public class WebScrapping {
                                 flight.setDiscountPrice(Double.parseDouble(priceElement.split("\n")[1]));
                             } else flight.setOriginalPrice(Double.parseDouble(priceElement));
 
-
-
                             if(segment == 1){
                                 trip.setFlightOutward(flight);
                             } else {
@@ -342,7 +361,7 @@ public class WebScrapping {
                         flights.get(currentPage).add(trip);
                     } catch (Exception ex) {
                         ex.printStackTrace();
-                        System.out.println();
+                        doNothingToHaveABreakPoint();
                     }
                 });
 
@@ -359,7 +378,7 @@ public class WebScrapping {
 
                         ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
                         selectFlightButton.click();
-
+                        Thread.sleep(2000);
                         for (int c = 0; c <= 1; c++) {
 
                             FlightOneWayData flight = c == 0 ? trip.getFlightOutward() : trip.getFlightReturn();
@@ -384,11 +403,8 @@ public class WebScrapping {
                                     stop.setCompanyName(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_segment_%d']//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and translate(substring-after(@data-testid, 'timeline_leg_'), '0123456789', '') = ''])[%d]//div[@data-testid='timeline_leg_info_carrier']", c, stopPos+1))).getText());
 
                                     stop.setAirPlaneNumber(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_segment_%d']//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and translate(substring-after(@data-testid, 'timeline_leg_'), '0123456789', '') = ''])[%d]//div[@data-testid='timeline_leg_info_flight_number_and_class']", c, stopPos+1))).getText().split(" ")[0]);
-
-
                                     flight.addStop(stop);
                                 }
-
                                 if(c == 0){
                                     trip.setFlightOutward(flight);
                                 } else {
@@ -398,34 +414,23 @@ public class WebScrapping {
                                 flight.setAirPlaneNumber(driver.findElements(By.xpath(String.format("(//div[@data-testid='timeline_segment_%d']//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and translate(substring-after(@data-testid, 'timeline_leg_'), '0123456789', '') = ''])//div[@data-testid='timeline_leg_info_flight_number_and_class']", c, c+1))).getFirst().getText().split(" ")[0]);
                             }
                         }
-
                         WebElement closeButton = driver.findElement(By.xpath("//div[contains(@class, 'Overlay-module__content___+pCjC')]//button[@aria-label='Close']"));
                         closeButton.click();
-
-                        System.out.println(trip);
                     } catch (Exception e) {
                         e.printStackTrace();
-                        System.out.println();
+                        doNothingToHaveABreakPoint();
                     }
-                    /*System.out.printf("%s at %s until %s e o mesmo %s direto, com um preço de %s%s. Tem um total de %d escalas%s. %n",
-                            flight.getCompanyName(),
-                            flight.getDepartureDate().format(DATE_TIME_FORMATTER),
-                            flight.getDestinationDate().format(DATE_TIME_FORMATTER),
-                            "Y".equalsIgnoreCase(flight.getIsDirect()) ? "é" : "não é",
-                            flight.getDiscountPrice() != null ? DECIMAL_FORMAT.format(flight.getDiscountPrice()) : DECIMAL_FORMAT.format(flight.getOriginalPrice()),
-                            flight.getDiscountPrice() != null ? " (antes era " + DECIMAL_FORMAT.format(flight.getOriginalPrice()) + " €)" : "",
-                            flight.getStops().size(),
-                            !flight.getStops().isEmpty() ? " (" + String.join(", ", flight.getStops().stream().map(FlightOneWayData::getAirPlaneNumber).toList()) + ")" : " no avião " + flight.getAirPlaneNumber()
-                    );*/
+                    
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(5000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
+                        doNothingToHaveABreakPoint();
                     }
                 });
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.out.println();
+                doNothingToHaveABreakPoint();
             }
         }
         driver.close();
@@ -452,8 +457,23 @@ public class WebScrapping {
 
     public static int getMonth(String month) {
         return switch (month) {
+            case "Jan" -> 1;
+            case "Feb" -> 2;
+            case "Mar" -> 3;
+            case "Apr" -> 4;
+            case "May" -> 5;
+            case "Jun" -> 6;
+            case "Jul" -> 7;
+            case "Aug" -> 8;
+            case "Sep" -> 9;
+            case "Oct" -> 10;
+            case "Nov" -> 11;
             case "Dec" -> 12;
             default -> -1;
         };
+    }
+    
+    
+    public static void doNothingToHaveABreakPoint(){
     }
 }

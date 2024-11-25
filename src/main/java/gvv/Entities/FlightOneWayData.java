@@ -10,7 +10,9 @@ public class FlightOneWayData {
 
     private String name;
     private LocalDateTime departureDate;
+    private String departureAirport;
     private LocalDateTime destinationDate;
+    private String destinationAirport;
     private String departureCity;
     private String destinationCity;
     private String isDirect;
@@ -19,6 +21,8 @@ public class FlightOneWayData {
     private String companyName;
     private Double discountPrice = null;
     private Double originalPrice;
+
+
 
     private FlightClass flightClass;
     private int adults = 1;
@@ -161,6 +165,23 @@ public class FlightOneWayData {
         return this;
     }
 
+    public String getDepartureAirport() {
+        return departureAirport;
+    }
+
+    public FlightOneWayData setDepartureAirport(String departureAirport) {
+        this.departureAirport = departureAirport;
+        return this;
+    }
+
+    public String getDestinationAirport() {
+        return destinationAirport;
+    }
+
+    public FlightOneWayData setDestinationAirport(String destinationAirport) {
+        this.destinationAirport = destinationAirport;
+        return this;
+    }
 
     @Override
     public String toString() {
@@ -170,6 +191,8 @@ public class FlightOneWayData {
                 "\"destinationDate\": \"" + (destinationDate != null ? destinationDate.toString() : null) + "\"," +
                 "\"departureCity\": \"" + departureCity + "\"," +
                 "\"destinationCity\": \"" + destinationCity + "\"," +
+                "\"departureAirport\": \"" + departureAirport + "\"," +
+                "\"destinationAirport\": \"" + destinationAirport + "\"," +
                 "\"isDirect\": \"" + isDirect + "\"," +
                 "\"retrievedDate\": \"" + (retrievedDate != null ? retrievedDate.toString() : null) + "\"," +
                 "\"companyName\": \"" + companyName + "\"," +
