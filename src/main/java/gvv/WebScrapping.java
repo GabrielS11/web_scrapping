@@ -51,7 +51,7 @@ public class WebScrapping {
      */
 
     private static Map<String, List<String[]>> FLIGHTS = new HashMap<>() {{
-        put("OPO", List.of(
+        put("OPO - Francisco Sá Carneiro Airport", List.of(
                 new String[]{"LIS", "Humberto Delgado Airport"},
                 new String[]{"DPS", "Ngurah Rai International Airport"},
                 new String[]{"HND", "Tokyo Haneda Airport"},
@@ -82,9 +82,10 @@ public class WebScrapping {
 
         for (String departureCityAirport : FLIGHTS.keySet()) {
             String departure = departureCityAirport.split(" - ")[0];
-            for (String[] destinationArr : FLIGHTS.get(departure)) {
+            String departureAirportName = departureCityAirport.split(" - ")[1];
+            for (String[] destinationArr : FLIGHTS.get(departureCityAirport)) {
                 String destination = destinationArr[0];
-                String airportName = destinationArr[1];
+                String destinationAirportName = destinationArr[1];
                 for (FlightClass flightClass : FlightClass.values()) {
 
                     oneWay.addAll(webscrapOneWay(departure, destination,
@@ -98,6 +99,8 @@ public class WebScrapping {
                     ).stream().peek(flightData -> {
                         flightData.setFlightClass(flightClass);
                         flightData.setAdults(adultsQt);
+                        flightData.setDepartureAirport(departureAirportName);
+                        flightData.setDestinationAirport(destinationAirportName);
                     }).toList());
                     roundTrip.addAll(webscrapRoundTrip(departure, destination, ROUND_TRIP_URL
                                     .replace("{{DEPARTURE_CITY_CODE}}", departure)
@@ -114,11 +117,19 @@ public class WebScrapping {
                         flightData.getFlightOutward().setFlightClass(flightClass);
                         flightData.getFlightOutward().setAdults(adultsQt);
 
+                        flightData.setDepartureAirport(departureAirportName);
+                        flightData.setDestinationAirport(destinationAirportName);
+
                         flightData.getFlightReturn().setFlightClass(flightClass);
                         flightData.getFlightReturn().setAdults(adultsQt);
 
                     }).toList());
                 }
+            }
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
 
@@ -440,7 +451,12 @@ public class WebScrapping {
     }
 
     private static WebDriver getWebDriver() {
-        System.setProperty("webdriver.chrome.driver", "D:\\Tools\\chromedriver-win64\\chromedriver.exe");
+
+        // Vitor Desktop
+        //String driverLocation = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
+        // Vitor Portátil
+        String driverLocation = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
+        System.setProperty("webdriver.chrome.driver", driverLocation);
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
