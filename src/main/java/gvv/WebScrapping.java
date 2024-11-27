@@ -3,10 +3,11 @@ package gvv;
 import gvv.Entities.FlightOneWayData;
 import gvv.Entities.FlightClass;
 import gvv.Entities.FlightRoundTripData;
-import org.example.Flight;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
@@ -52,10 +53,7 @@ public class WebScrapping {
 
     private static Map<String, List<String[]>> FLIGHTS = new HashMap<>() {{
         put("OPO - Francisco Sá Carneiro Airport", List.of(
-                new String[]{"LIS", "Humberto Delgado Airport"},
-                new String[]{"DPS", "Ngurah Rai International Airport"},
                 new String[]{"HND", "Tokyo Haneda Airport"},
-                new String[]{"ICN", "Incheon International Airport"},
                 new String[]{"GIG", "Rio de Janeiro/Galeao International Airport"},
                 new String[]{"ANR", "Antwerp International Airport"}
         ));
@@ -102,6 +100,13 @@ public class WebScrapping {
                         flightData.setDepartureAirport(departureAirportName);
                         flightData.setDestinationAirport(destinationAirportName);
                     }).toList());
+
+                    System.out.println("Getting ready for the round trip, sleeping for 5 seconds...");
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     roundTrip.addAll(webscrapRoundTrip(departure, destination, ROUND_TRIP_URL
                                     .replace("{{DEPARTURE_CITY_CODE}}", departure)
                                     .replace("{{ARRIVAL_CITY_CODE}}", destination)
@@ -154,14 +159,7 @@ public class WebScrapping {
             driver.get(url);
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(15));
             totalPages = Integer.parseInt(driver.findElement(By.xpath("(//li[contains(@class, 'Pagination-module__item___ZDS-g')])[last()]")).getText());
-            try {
-                WebElement cookieBanner = driver.findElement(By.id("onetrust-banner-sdk"));
-                WebElement acceptCookiesButton = cookieBanner.findElement(By.xpath(".//button[contains(text(), 'Accept')]"));
-                if (acceptCookiesButton.isDisplayed()) {
-                    acceptCookiesButton.click();
-                }
-            } catch (NoSuchElementException | ElementNotInteractableException ignored) {
-            }
+            handleCookies(driver);
         } catch(Exception ex) {
             ex.printStackTrace();
         }
@@ -172,6 +170,7 @@ public class WebScrapping {
 
         // Iterar por cada página e adquirir os valores
         for(int page = 1; page <= totalPages; page++) {
+            System.out.println("Processing page " + page + " of " + totalPages);
             flights.put(page, new ArrayList<>());
             url = request_url.replace("{{PAGE_NUMBER}}", String.valueOf(page));
             driver.get(url);
@@ -204,7 +203,7 @@ public class WebScrapping {
 
                         flight.setCompanyName(flightElement.findElement(By.xpath(".//div[@data-testid='flight_card_carrier_0']//div[contains(@class, 'Text-module__root--variant-small_1___An5P8')]")).getText());
 
-                        String priceElement = flightElement.findElement(By.xpath(".//div[@data-testid='flight_card_price_main_price']")).getText().replace("€", "").replace(",", ".");
+                        String priceElement = replaceDotsExceptLast(flightElement.findElement(By.xpath(".//div[@data-testid='flight_card_price_main_price']")).getText().replace("€", "").replace(",", "."));
                         if (priceElement.contains("\n")) {
                             flight.setOriginalPrice(Double.parseDouble(priceElement.split("\n")[0]));
                             flight.setDiscountPrice(Double.parseDouble(priceElement.split("\n")[1]));
@@ -217,7 +216,7 @@ public class WebScrapping {
                 });
 
                 // Abrir o modal e adquirir os dados extra necessários
-                flights.get(currentPage).forEach(flight -> {
+                flights.put(currentPage,flights.get(currentPage).stream().filter(flight -> {
                     try {
 
                         String xpath = String.format(
@@ -231,7 +230,8 @@ public class WebScrapping {
                         selectFlightButton.click();
 
 
-                        Thread.sleep(2000);
+                        //Thread.sleep(500);
+                        if(removeNoFlightsModal(driver)) return false;
                         List<WebElement> stopElements = driver.findElements(By.xpath("//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')]"));
 
                         for (int c = 1; c <= stopElements.size(); c++) {
@@ -266,23 +266,32 @@ public class WebScrapping {
                                 doNothingToHaveABreakPoint();
                             }
                         }
-
-                        WebElement closeButton = driver.findElement(By.xpath("//div[contains(@class, 'Overlay-module__content___+pCjC')]//button[@aria-label='Close']"));
-                        closeButton.click();
+                        try {
+                            WebElement closeButton = driver.findElement(By.xpath("//div[contains(@class, 'Overlay-module__content___+pCjC')]//button[@aria-label='Close']"));
+                            closeButton.click();
+                        } catch (Exception ex) {
+                            doNothingToHaveABreakPoint();
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                         doNothingToHaveABreakPoint();
                     }
-                    try {
-                        Thread.sleep(5000);
+                    /*try {
+                        Thread.sleep(900);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                         doNothingToHaveABreakPoint();
-                    }
-                });
+                    }*/
+                    return true;
+                }).collect(Collectors.toCollection(ArrayList::new)));
             } catch (Exception ex) {
                 ex.printStackTrace();
                 doNothingToHaveABreakPoint();
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
         driver.close();
@@ -306,14 +315,7 @@ public class WebScrapping {
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(15));
 
             totalPages = Integer.parseInt(driver.findElement(By.xpath("(//li[contains(@class, 'Pagination-module__item___ZDS-g')])[last()]")).getText());
-            try {
-                WebElement cookieBanner = driver.findElement(By.id("onetrust-banner-sdk"));
-                WebElement acceptCookiesButton = cookieBanner.findElement(By.xpath(".//button[contains(text(), 'Accept')]"));
-                if (acceptCookiesButton.isDisplayed()) {
-                    acceptCookiesButton.click();
-                }
-            } catch (NoSuchElementException | ElementNotInteractableException ignored) {
-            }
+            handleCookies(driver);
         } catch(Exception ex) {
             ex.printStackTrace();
             doNothingToHaveABreakPoint();
@@ -321,7 +323,8 @@ public class WebScrapping {
         if(totalPages == null) return new ArrayList<>();
 
         // Iterar por cada página e adquirir os valores
-        for(int page = 8; page <= totalPages; page++) {
+        for(int page = 1; page <= totalPages; page++) {
+            System.out.println("Processing page " + page + " of " + totalPages);
             flights.put(page, new ArrayList<>());
             url = request_url.replace("{{PAGE_NUMBER}}", String.valueOf(page));
             driver.get(url);
@@ -356,7 +359,7 @@ public class WebScrapping {
 
                             flight.setCompanyName(flightElement.findElement(By.xpath(".//div[starts-with(@data-testid, 'flight_card_carrier_')]//div[contains(@class, 'Text-module__root--variant-small_1___An5P8')]")).getText());
 
-                            String priceElement = flightElement.findElement(By.xpath(".//div[@data-testid='flight_card_price_main_price']")).getText().replace("€", "").replace(",", ".");
+                            String priceElement = replaceDotsExceptLast(flightElement.findElement(By.xpath(".//div[@data-testid='flight_card_price_main_price']")).getText().replace("€", "").replace(",", "."));
                             if (priceElement.contains("\n")) {
                                 flight.setOriginalPrice(Double.parseDouble(priceElement.split("\n")[0]));
                                 flight.setDiscountPrice(Double.parseDouble(priceElement.split("\n")[1]));
@@ -377,7 +380,7 @@ public class WebScrapping {
                 });
 
                 AtomicInteger iteration = new AtomicInteger();
-                flights.get(currentPage).forEach(trip -> {
+                flights.put(currentPage,flights.get(currentPage).stream().filter(trip -> {
                     try {
                         String xpath = String.format(
                                 "//div[@id='flightcard-%d']",
@@ -389,7 +392,8 @@ public class WebScrapping {
 
                         ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
                         selectFlightButton.click();
-                        Thread.sleep(2000);
+                        //Thread.sleep(500);
+                        if(removeNoFlightsModal(driver)) return false;
                         for (int c = 0; c <= 1; c++) {
 
                             FlightOneWayData flight = c == 0 ? trip.getFlightOutward() : trip.getFlightReturn();
@@ -431,17 +435,16 @@ public class WebScrapping {
                         e.printStackTrace();
                         doNothingToHaveABreakPoint();
                     }
-                    
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        doNothingToHaveABreakPoint();
-                    }
-                });
+                    return true;
+                }).collect(Collectors.toCollection(ArrayList::new)));
             } catch (Exception ex) {
                 ex.printStackTrace();
                 doNothingToHaveABreakPoint();
+            }
+            try {
+                Thread.sleep(4000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
         driver.close();
@@ -450,12 +453,47 @@ public class WebScrapping {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
+    public static boolean removeNoFlightsModal(WebDriver driver) {
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(500));
+
+            WebElement overlay = wait.until(ExpectedConditions.presenceOfElementLocated(
+                    By.xpath("//div[contains(@class, 'Overlay-module__root___8ZZO+') and contains(@class, 'Overlay-module__root--visible___VhicQ') and .//h1[contains(text(), \"This flight's not available\")]]")
+            ));
+
+            if (overlay.getText().contains("This flight's not available")) {
+                ((JavascriptExecutor) driver).executeScript("arguments[0].style.display='none';", overlay);
+                return true;
+            } else {
+            }
+        } catch (TimeoutException ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
+
+    private static void handleCookies(WebDriver driver) {
+        try {
+            WebElement cookieBanner = driver.findElement(By.id("onetrust-banner-sdk"));
+            WebElement acceptCookiesButton = cookieBanner.findElement(By.xpath(".//button[contains(text(), 'Accept')]"));
+            if (acceptCookiesButton.isDisplayed()) {
+                acceptCookiesButton.click();
+            }
+        } catch (NoSuchElementException | ElementNotInteractableException ignored) {
+
+        }
+    }
+
+
     private static WebDriver getWebDriver() {
 
-        // Vitor Desktop
-        //String driverLocation = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
-        // Vitor Portátil
-        String driverLocation = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
+        // V Desktop
+        String driverLocation = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
+        // V Portátil
+        //String driverLocation = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
         System.setProperty("webdriver.chrome.driver", driverLocation);
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--disable-gpu");
@@ -469,6 +507,17 @@ public class WebScrapping {
         options.addArguments("--window-size=1920,1080");
         options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
         return new ChromeDriver(options);
+    }
+
+    public static String replaceDotsExceptLast(String input) {
+        int lastDotIndex = input.lastIndexOf(".");
+        if (lastDotIndex == -1) {
+            return input;
+        }
+
+        String beforeLastDot = input.substring(0, lastDotIndex).replace(".", "");
+        String afterLastDot = input.substring(lastDotIndex);
+        return beforeLastDot + afterLastDot;
     }
 
     public static int getMonth(String month) {
