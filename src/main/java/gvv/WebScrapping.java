@@ -157,11 +157,11 @@ public class WebScrapping {
             System.out.println("Launching browser...");
             System.out.println("Navigating to: " + url);
             driver.get(url);
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(15));
             totalPages = Integer.parseInt(driver.findElement(By.xpath("(//li[contains(@class, 'Pagination-module__item___ZDS-g')])[last()]")).getText());
             handleCookies(driver);
         } catch(Exception ex) {
             ex.printStackTrace();
+            doNothingToHaveABreakPoint();
         }
 
         if(totalPages == null) return new ArrayList<>();
@@ -212,6 +212,7 @@ public class WebScrapping {
                     } catch (Exception ex) {
                         System.err.println("Exception on iteration");
                         ex.printStackTrace();
+                        doNothingToHaveABreakPoint();
                     }
                 });
 
@@ -230,7 +231,7 @@ public class WebScrapping {
                         selectFlightButton.click();
 
 
-                        //Thread.sleep(500);
+
                         if(removeNoFlightsModal(driver)) return false;
                         List<WebElement> stopElements = driver.findElements(By.xpath("//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')]"));
 
@@ -275,13 +276,8 @@ public class WebScrapping {
                     } catch (Exception e) {
                         e.printStackTrace();
                         doNothingToHaveABreakPoint();
+                        return false;
                     }
-                    /*try {
-                        Thread.sleep(900);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        doNothingToHaveABreakPoint();
-                    }*/
                     return true;
                 }).collect(Collectors.toCollection(ArrayList::new)));
             } catch (Exception ex) {
@@ -312,7 +308,6 @@ public class WebScrapping {
             System.out.println("Launching browser...");
             System.out.println("Navigating to: " + url);
             driver.get(url);
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(15));
 
             totalPages = Integer.parseInt(driver.findElement(By.xpath("(//li[contains(@class, 'Pagination-module__item___ZDS-g')])[last()]")).getText());
             handleCookies(driver);
@@ -392,7 +387,6 @@ public class WebScrapping {
 
                         ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
                         selectFlightButton.click();
-                        //Thread.sleep(500);
                         if(removeNoFlightsModal(driver)) return false;
                         for (int c = 0; c <= 1; c++) {
 
@@ -442,7 +436,7 @@ public class WebScrapping {
                 doNothingToHaveABreakPoint();
             }
             try {
-                Thread.sleep(4000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -455,7 +449,7 @@ public class WebScrapping {
 
     public static boolean removeNoFlightsModal(WebDriver driver) {
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(500));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(200));
 
             WebElement overlay = wait.until(ExpectedConditions.presenceOfElementLocated(
                     By.xpath("//div[contains(@class, 'Overlay-module__root___8ZZO+') and contains(@class, 'Overlay-module__root--visible___VhicQ') and .//h1[contains(text(), \"This flight's not available\")]]")
@@ -491,9 +485,9 @@ public class WebScrapping {
     private static WebDriver getWebDriver() {
 
         // V Desktop
-        String driverLocation = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
+        //String driverLocation = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
         // V Portátil
-        //String driverLocation = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
+        String driverLocation = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
         System.setProperty("webdriver.chrome.driver", driverLocation);
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--disable-gpu");
@@ -506,7 +500,9 @@ public class WebScrapping {
         options.addArguments("--remote-allow-origins=*");
         options.addArguments("--window-size=1920,1080");
         options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
-        return new ChromeDriver(options);
+        ChromeDriver driver = new ChromeDriver(options);
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        return driver;
     }
 
     public static String replaceDotsExceptLast(String input) {
