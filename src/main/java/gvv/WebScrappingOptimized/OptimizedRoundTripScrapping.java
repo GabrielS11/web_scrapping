@@ -95,7 +95,6 @@ public class OptimizedRoundTripScrapping {
                     iteration.getAndIncrement();
                     WebElement updatedFlightElement = driver.findElement(By.xpath(xpath));
 
-
                     for(int selectFlightRetries = 0; selectFlightRetries < MAX_RETRIES; selectFlightRetries++) {
                         try {
                             WebElement selectFlightButton = updatedFlightElement.findElement(By.xpath(".//button[@data-testid='flight_card_bound_select_flight']"));
@@ -107,11 +106,7 @@ public class OptimizedRoundTripScrapping {
                             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
                             wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("LoadingScreen-module__loadingScreen___TJHLs")));
                         }
-
                     }
-
-
-
 
                     if(OptimizedWebScrapping.removeNoFlightsModal(driver)) return false;
                     for (int c = 0; c <= 1; c++) {
@@ -167,6 +162,13 @@ public class OptimizedRoundTripScrapping {
         }
 
         return List.of();
+        getConnection().update
+    }
+
+    private static Connection connection;
+
+    public static Connection getConnection(){
+        return connection;
     }
 }
 

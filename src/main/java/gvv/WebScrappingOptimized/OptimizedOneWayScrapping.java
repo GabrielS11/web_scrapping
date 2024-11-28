@@ -2,10 +2,7 @@ package gvv.WebScrappingOptimized;
 
 import gvv.Entities.FlightClass;
 import gvv.Entities.FlightOneWayData;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -75,7 +72,6 @@ public class OptimizedOneWayScrapping {
                     OptimizedWebScrapping.doNothingToHaveABreakPoint();
                 }
             });
-
             // Abrir o modal e adquirir os dados extra necessários
             return flights.stream().filter(flight -> {
                 try {
@@ -84,21 +80,22 @@ public class OptimizedOneWayScrapping {
                             flight.getCompanyName()
                     );
                     WebElement updatedFlightElement = driver.findElement(By.xpath(xpath));
+                    for(int selectFlightRetries = 0; selectFlightRetries < MAX_RETRIES; selectFlightRetries++) {
+                        try {
+                            WebElement selectFlightButton = updatedFlightElement.findElement(By.xpath(".//button[@data-testid='flight_card_bound_select_flight']"));
 
-                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-                    wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("LoadingScreen-module__loadingScreen___TJHLs")));
+                            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
+                            selectFlightButton.click();
 
-                    WebElement selectFlightButton = updatedFlightElement.findElement(By.xpath(".//button[@data-testid='flight_card_bound_select_flight']"));
-
-                    ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
-                    selectFlightButton.click();
-
-
+                            selectFlightRetries = MAX_RETRIES;
+                        } catch (ElementClickInterceptedException intercepted) {
+                            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+                            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("LoadingScreen-module__loadingScreen___TJHLs")));
+                        }
+                    }
                     if (OptimizedWebScrapping.removeNoFlightsModal(driver)) return false;
                     List<WebElement> stopElements = driver.findElements(By.xpath("//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')]"));
-
                     for (int c = 1; c <= stopElements.size(); c++) {
-
                         try {
                             if ("N".equalsIgnoreCase(flight.getIsDirect())) {
                                 FlightOneWayData stop = new FlightOneWayData();

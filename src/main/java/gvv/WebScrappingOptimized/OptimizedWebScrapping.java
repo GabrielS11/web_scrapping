@@ -23,6 +23,12 @@ import java.util.concurrent.Future;
 
 public class OptimizedWebScrapping {
 
+
+    // VITOR DESKTOP
+    //private static final String CHROME_DRIVEER_PATH = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
+    // VITOR PORTÁTIL
+    private static final String CHROME_DRIVEER_PATH = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
+
     private static final String ONE_WAY_URL = "https://flights.booking.com/flights/{{DEPARTURE_CITY_CODE}}-{{ARRIVAL_CITY_CODE}}?type=ONEWAY&from={{DEPARTURE_CITY_CODE}}&to={{ARRIVAL_CITY_CODE}}&cabinClass={{FLIGHT_CLASS}}&depart={{DEPARTURE_DATE}}&adults={{ADULTS_QUANTITY}}&page={{PAGE_NUMBER}}";
     private static final String ROUND_TRIP_URL = "https://flights.booking.com/flights/{{DEPARTURE_CITY_CODE}}-{{ARRIVAL_CITY_CODE}}/?type=ROUNDTRIP&adults={{ADULTS_QUANTITY}}&cabinClass={{FLIGHT_CLASS}}&from={{DEPARTURE_CITY_CODE}}&to={{ARRIVAL_CITY_CODE}}&depart={{DEPARTURE_DATE}}&return={{RETURN_DATE}}&page={{PAGE_NUMBER}}";
 
@@ -102,13 +108,7 @@ public class OptimizedWebScrapping {
                                 }
                             }*/
 
-
-
-
-
-
                             // IDA E VOLTA
-                            // qmd der erro na lnha 170 do roundtrip, por causa de ElementClickInterceptedException dar retry fechando o modal :)
                             totalPages = getTotalPages(driver, ROUND_TRIP_URL, departure, destination, departureDate, returnDate, adultsQt, flightClass);
                             for (int page = 1; page <= totalPages; page++) {
                                 System.out.printf("Processing page %d/%d for %s -> %s [ROUNDTRIP] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
@@ -219,12 +219,7 @@ public class OptimizedWebScrapping {
 
 
     private static WebDriver getWebDriver() {
-
-        // V Desktop
-        String driverLocation = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
-        // V Portátil
-        //String driverLocation = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
-        System.setProperty("webdriver.chrome.driver", driverLocation);
+        System.setProperty("webdriver.chrome.driver", CHROME_DRIVEER_PATH);
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
@@ -246,7 +241,6 @@ public class OptimizedWebScrapping {
         if (lastDotIndex == -1) {
             return input;
         }
-
         String beforeLastDot = input.substring(0, lastDotIndex).replace(".", "");
         String afterLastDot = input.substring(lastDotIndex);
         return beforeLastDot + afterLastDot;
