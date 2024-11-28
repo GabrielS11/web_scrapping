@@ -3,10 +3,7 @@ package gvv.WebScrappingOptimized;
 import gvv.Entities.FlightClass;
 import gvv.Entities.FlightOneWayData;
 import gvv.Entities.FlightRoundTripData;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -98,13 +95,24 @@ public class OptimizedRoundTripScrapping {
                     iteration.getAndIncrement();
                     WebElement updatedFlightElement = driver.findElement(By.xpath(xpath));
 
-                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-                    wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("LoadingScreen-module__loadingScreen___TJHLs")));
 
-                    WebElement selectFlightButton = updatedFlightElement.findElement(By.xpath(".//button[@data-testid='flight_card_bound_select_flight']"));
+                    for(int selectFlightRetries = 0; selectFlightRetries < MAX_RETRIES; selectFlightRetries++) {
+                        try {
+                            WebElement selectFlightButton = updatedFlightElement.findElement(By.xpath(".//button[@data-testid='flight_card_bound_select_flight']"));
 
-                    ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
-                    selectFlightButton.click();
+                            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
+                            selectFlightButton.click();
+                            selectFlightRetries = MAX_RETRIES;
+                        } catch (ElementClickInterceptedException intercepted) {
+                            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+                            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("LoadingScreen-module__loadingScreen___TJHLs")));
+                        }
+
+                    }
+
+
+
+
                     if(OptimizedWebScrapping.removeNoFlightsModal(driver)) return false;
                     for (int c = 0; c <= 1; c++) {
 
