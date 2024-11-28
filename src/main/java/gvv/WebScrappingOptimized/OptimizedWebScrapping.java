@@ -1,8 +1,8 @@
-package gvv;
+package gvv.WebScrappingOptimized;
 
 import gvv.Entities.FlightClass;
 import gvv.Entities.FlightOneWayData;
-import gvv.WebScrappingOptimized.OptimizedOneWayScrapping;
+import gvv.Entities.FlightRoundTripData;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OptimizedWebScrapping {
 
@@ -47,11 +46,12 @@ public class OptimizedWebScrapping {
 
 
     public static void startWebScrapping() {
-        ExecutorService executor = Executors.newFixedThreadPool(4); // Pool de 4 threads
+        ExecutorService executor = Executors.newFixedThreadPool(2); // Pool de 4 threads
         List<Future<?>> tasks = new ArrayList<>();
 
         LocalDateTime currentTime = LocalDateTime.now();
         LocalDateTime departureDate = LocalDateTime.now().plusDays(30);
+        LocalDateTime returnDate = LocalDateTime.now().plusDays(34);
         int adultsQt = 1;
 
 
@@ -67,9 +67,9 @@ public class OptimizedWebScrapping {
                     tasks.add(executor.submit(() -> {
                         WebDriver driver = getWebDriver(); // Cada thread usa seu próprio WebDriver
                         try {
-                            int totalPages = getTotalPages(driver, ONE_WAY_URL, departure, destination, departureDate, adultsQt, flightClass);
-                            for (int page = 1; page <= totalPages; page++) {
-                                System.out.printf("Processing page %d/%d for %s -> %s [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
+                            int totalPages = 0;//getTotalPages(driver, ONE_WAY_URL, departure, destination, departureDate, LocalDateTime.now(), adultsQt, flightClass);
+                            /*for (int page = 1; page <= totalPages; page++) {
+                                System.out.printf("Processing page %d/%d for %s -> %s [ONE WAY] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
 
                                 String pageUrl = ONE_WAY_URL.replace("{{DEPARTURE_CITY_CODE}}", departure)
                                         .replace("{{ARRIVAL_CITY_CODE}}", destination)
@@ -86,7 +86,7 @@ public class OptimizedWebScrapping {
                                 }).toList();
 
 
-                                String writePath = "./flights/" + departureCityAirport + "/" + String.join(" - ", destinationArr) + "/" + flightClass + "/" + currentTime.format(DATE_TIME_FORMATTER).replace(" ", "").replace(":", "h") + "m.json";
+                                String writePath = "./flights/" + departureCityAirport + "/" + String.join(" - ", destinationArr) + "/" + flightClass + "/ONE-WAY/" + currentTime.format(DATE_TIME_FORMATTER).replace(" ", "").replace(":", "h") + "m.json";
                                 writeToFile(writePath, "[", false);
                                 for(int i = 0; i < flights.size(); i++) {
                                     FlightOneWayData flight = flights.get(i);
@@ -97,16 +97,74 @@ public class OptimizedWebScrapping {
                                 writeToFile(writePath, "]",true);
 
                                 if (page < totalPages) {
-                                    System.out.println("Resetting limit (waiting 60 seconds) before continuing...");
-                                    Thread.sleep(60000);
+                                    System.out.println("Resetting limit (waiting 70 seconds) before continuing...");
+                                    Thread.sleep(70000);
+                                }
+                            }*/
+
+
+
+
+
+
+                            // IDA E VOLTA
+                            // qmd der erro na lnha 170 do roundtrip, por causa de ElementClickInterceptedException dar retry fechando o modal :)
+                            totalPages = getTotalPages(driver, ROUND_TRIP_URL, departure, destination, departureDate, returnDate, adultsQt, flightClass);
+                            for (int page = 1; page <= totalPages; page++) {
+                                System.out.printf("Processing page %d/%d for %s -> %s [ROUNDTRIP] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
+
+                                String pageUrl = ROUND_TRIP_URL.replace("{{DEPARTURE_CITY_CODE}}", departure)
+                                        .replace("{{ARRIVAL_CITY_CODE}}", destination)
+                                        .replace("{{ADULTS_QUANTITY}}", String.valueOf(adultsQt))
+                                        .replace("{{FLIGHT_CLASS}}", flightClass.name().toUpperCase())
+                                        .replace("{{DEPARTURE_DATE}}", departureDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                        .replace("{{RETURN_DATE}}", returnDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                        .replace("{{PAGE_NUMBER}}", String.valueOf(page));
+
+                                List<FlightRoundTripData> flights = OptimizedRoundTripScrapping.processPage(driver, pageUrl, departure, destination, departureDate).stream().peek(flightData -> {
+                                    flightData.setDepartureCity(departure);
+                                    flightData.setDepartureCity(destination);
+                                    flightData.getFlightOutward().setDepartureCity(departure);
+                                    flightData.getFlightOutward().setDestinationCity(destination);
+                                    flightData.getFlightOutward().setFlightClass(flightClass);
+                                    flightData.getFlightOutward().setAdults(adultsQt);
+
+                                    flightData.setDepartureAirport(departureAirportName);
+                                    flightData.setDestinationAirport(destinationAirportName);
+
+                                    flightData.setDepartureDate(departureDate);
+                                    flightData.setReturnDate(returnDate);
+                                    flightData.getFlightReturn().setFlightClass(flightClass);
+                                    flightData.getFlightReturn().setAdults(adultsQt);
+                                }).toList();
+
+
+                                String writePath = "./flights/" + departureCityAirport + "/" + String.join(" - ", destinationArr) + "/" + flightClass + "/ROUND-TRIP/" + currentTime.format(DATE_TIME_FORMATTER).replace(" ", "").replace(":", "h") + "m.json";
+                                writeToFile(writePath, "[", false);
+                                for(int i = 0; i < flights.size(); i++) {
+                                    FlightRoundTripData flight = flights.get(i);
+                                    System.out.print(flight);
+
+                                    writeToFile(writePath, flight.toString() + (i+1 == flights.size() ? "" : "," ), true);
+                                }
+                                writeToFile(writePath, "]",true);
+
+                                if (page < totalPages) {
+                                    System.out.println("Resetting limit (waiting 70 seconds) before continuing...");
+                                    Thread.sleep(70000);
                                 }
                             }
+
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         } finally {
                             driver.quit(); // Fechar o WebDriver ao terminar
                         }
                     }));
+
+
+
                 }
             }
         }
@@ -119,7 +177,6 @@ public class OptimizedWebScrapping {
                 e.printStackTrace();
             }
         });
-
         executor.shutdown();
     }
 
@@ -148,9 +205,6 @@ public class OptimizedWebScrapping {
         return false;
     }
 
-
-
-
     private static void handleCookies(WebDriver driver) {
         try {
             WebElement cookieBanner = driver.findElement(By.id("onetrust-banner-sdk"));
@@ -167,9 +221,9 @@ public class OptimizedWebScrapping {
     private static WebDriver getWebDriver() {
 
         // V Desktop
-        //String driverLocation = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
+        String driverLocation = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
         // V Portátil
-        String driverLocation = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
+        //String driverLocation = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
         System.setProperty("webdriver.chrome.driver", driverLocation);
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--disable-gpu");
@@ -221,13 +275,14 @@ public class OptimizedWebScrapping {
         return;
     }
 
-    public static int getTotalPages(WebDriver driver, String baseUrl, String departure, String destination, LocalDateTime date, int adultsQt, FlightClass flightClass) {
+    public static int getTotalPages(WebDriver driver, String baseUrl, String departure, String destination, LocalDateTime departureDate, LocalDateTime returnDate, int adultsQt, FlightClass flightClass) {
         Integer totalPages = null;
         String url = baseUrl.replace("{{DEPARTURE_CITY_CODE}}", departure)
                 .replace("{{ARRIVAL_CITY_CODE}}", destination)
                 .replace("{{ADULTS_QUANTITY}}", String.valueOf(adultsQt))
                 .replace("{{FLIGHT_CLASS}}", flightClass.name().toUpperCase())
-                .replace("{{DEPARTURE_DATE}}", date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .replace("{{DEPARTURE_DATE}}", departureDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .replace("{{RETURN_DATE}}", returnDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                 .replace("{{PAGE_NUMBER}}", "");
         try {
             System.out.println("Launching browser...");
