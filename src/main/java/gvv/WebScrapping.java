@@ -18,6 +18,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+@Deprecated
 public class WebScrapping {
     /**
      * VARIABLES
