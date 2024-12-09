@@ -1,8 +1,8 @@
 package gvv;
 
-import gvv.Entities.FlightOneWayData;
-import gvv.Entities.FlightClass;
-import gvv.Entities.FlightRoundTripData;
+import gvv.Types.FlightOneWayData;
+import gvv.Types.FlightClass;
+import gvv.Types.FlightRoundTripData;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;

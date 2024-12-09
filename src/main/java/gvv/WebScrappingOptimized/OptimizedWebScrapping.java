@@ -1,8 +1,7 @@
 package gvv.WebScrappingOptimized;
 
-import gvv.Entities.FlightClass;
-import gvv.Entities.FlightOneWayData;
-import gvv.Entities.FlightRoundTripData;
+import gvv.Types.FlightClass;
+import gvv.Types.FlightRoundTripData;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -25,9 +24,9 @@ public class OptimizedWebScrapping {
 
 
     // VITOR DESKTOP
-    //private static final String CHROME_DRIVEER_PATH = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
+    private static final String CHROME_DRIVEER_PATH = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
     // VITOR PORTÁTIL
-    private static final String CHROME_DRIVEER_PATH = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
+    //private static final String CHROME_DRIVEER_PATH = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
 
     private static final String ONE_WAY_URL = "https://flights.booking.com/flights/{{DEPARTURE_CITY_CODE}}-{{ARRIVAL_CITY_CODE}}?type=ONEWAY&from={{DEPARTURE_CITY_CODE}}&to={{ARRIVAL_CITY_CODE}}&cabinClass={{FLIGHT_CLASS}}&depart={{DEPARTURE_DATE}}&adults={{ADULTS_QUANTITY}}&page={{PAGE_NUMBER}}";
     private static final String ROUND_TRIP_URL = "https://flights.booking.com/flights/{{DEPARTURE_CITY_CODE}}-{{ARRIVAL_CITY_CODE}}/?type=ROUNDTRIP&adults={{ADULTS_QUANTITY}}&cabinClass={{FLIGHT_CLASS}}&from={{DEPARTURE_CITY_CODE}}&to={{ARRIVAL_CITY_CODE}}&depart={{DEPARTURE_DATE}}&return={{RETURN_DATE}}&page={{PAGE_NUMBER}}";
@@ -289,6 +288,24 @@ public class OptimizedWebScrapping {
             doNothingToHaveABreakPoint();
         }
         return 0;
+    }
+
+    public static boolean openAndRetryInCaseOfFailure(WebDriver driver, WebElement updatedFlightElement, int maxRetries) {
+        for(int selectFlightRetries = 0; selectFlightRetries < maxRetries; selectFlightRetries++) {
+            try {
+                WebElement selectFlightButton = updatedFlightElement.findElement(By.xpath(".//button[@data-testid='flight_card_bound_select_flight']"));
+
+                ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
+                selectFlightButton.click();
+
+                selectFlightRetries = maxRetries;
+            } catch (ElementClickInterceptedException intercepted) {
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+                wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("LoadingScreen-module__loadingScreen___TJHLs")));
+            }
+        }
+        if (OptimizedWebScrapping.removeNoFlightsModal(driver)) return true;
+        return false;
     }
 
 

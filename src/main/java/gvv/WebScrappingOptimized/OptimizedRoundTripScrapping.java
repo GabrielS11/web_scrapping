@@ -1,11 +1,8 @@
 package gvv.WebScrappingOptimized;
 
-import gvv.Entities.FlightClass;
-import gvv.Entities.FlightOneWayData;
-import gvv.Entities.FlightRoundTripData;
+import gvv.Types.FlightOneWayData;
+import gvv.Types.FlightRoundTripData;
 import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -24,6 +21,7 @@ public class OptimizedRoundTripScrapping {
     public static List<FlightRoundTripData> processPage(WebDriver driver, String pageUrl, String departure, String destination, LocalDateTime date) {
 
         final List<FlightRoundTripData> flights = new ArrayList<>();
+        driver.manage().timeouts().implicitlyWait(Duration.ofMillis(10));
         try {
             for(int i = 0; i < MAX_RETRIES; i++) {
                 driver.get(pageUrl);
@@ -35,6 +33,7 @@ public class OptimizedRoundTripScrapping {
                 } else i = MAX_RETRIES;
             }
 
+            driver.manage().timeouts().implicitlyWait(Duration.ofMillis(3));
 
             List<WebElement> flightElements = driver.findElements(By.xpath("//li[contains(@class, 'List-module__item___TMd8E List-module__item--spacing-medium___foMk1')]"));
             // Adquirir os valores a partir da página inicial
@@ -95,20 +94,8 @@ public class OptimizedRoundTripScrapping {
                     iteration.getAndIncrement();
                     WebElement updatedFlightElement = driver.findElement(By.xpath(xpath));
 
-                    for(int selectFlightRetries = 0; selectFlightRetries < MAX_RETRIES; selectFlightRetries++) {
-                        try {
-                            WebElement selectFlightButton = updatedFlightElement.findElement(By.xpath(".//button[@data-testid='flight_card_bound_select_flight']"));
-
-                            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
-                            selectFlightButton.click();
-                            selectFlightRetries = MAX_RETRIES;
-                        } catch (ElementClickInterceptedException intercepted) {
-                            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-                            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("LoadingScreen-module__loadingScreen___TJHLs")));
-                        }
-                    }
-
-                    if(OptimizedWebScrapping.removeNoFlightsModal(driver)) return false;
+                    if (OptimizedWebScrapping.openAndRetryInCaseOfFailure(driver, updatedFlightElement, MAX_RETRIES))
+                        return false;
                     for (int c = 0; c <= 1; c++) {
 
                         FlightOneWayData flight = c == 0 ? trip.getFlightOutward() : trip.getFlightReturn();
@@ -162,14 +149,8 @@ public class OptimizedRoundTripScrapping {
         }
 
         return List.of();
-        getConnection().update
     }
 
-    private static Connection connection;
-
-    public static Connection getConnection(){
-        return connection;
-    }
 }
 
 

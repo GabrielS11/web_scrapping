@@ -1,4 +1,4 @@
-package gvv.Entities;
+package gvv.Types;
 
 public enum FlightClass {
     ECONOMY,

@@ -1,6 +1,4 @@
-package gvv.Entities;
-
-import org.openqa.selenium.WebElement;
+package gvv.Types;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
