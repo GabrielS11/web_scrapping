@@ -83,7 +83,8 @@ public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
         if (existingEntity != null) {
             return existingEntity;
         }
-        return save(entity);
+        cache.put(value, save(entity));
+        return cache.get(value);
     }
 
     @Override
@@ -101,5 +102,8 @@ public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
         }
     }
 
-
+    @Override
+    public void close() {
+        this.entityManager.close();
+    }
 }

@@ -34,13 +34,12 @@ public class OptimizedWebScrapping {
 
     private static final Map<String, List<String[]>> FLIGHTS = new HashMap<>() {{
         ArrayList<String[]> arr = new ArrayList<>();
-        arr.add(new String[]{"HND", "Tokyo Haneda Airport"});
-        put("OPO - Francisco Sá Carneiro Airport", arr);
-                /*List.of(
+        //arr.add(new String[]{"HND", "Tokyo Haneda Airport"});
+        put("OPO - Francisco Sá Carneiro Airport", List.of(
                 new String[]{"HND", "Tokyo Haneda Airport"},
                 new String[]{"GIG", "Rio de Janeiro/Galeao International Airport"},
-                new String[]{"ANR", "Antwerp International Airport"}*/
-        //));
+                new String[]{"ANR", "Antwerp International Airport"}
+        ));
     }};
 
 
@@ -52,7 +51,7 @@ public class OptimizedWebScrapping {
 
 
     public static void startWebScrapping() {
-        final int maxThreadPool = 1;
+        final int maxThreadPool = 2;
         ExecutorService executor = Executors.newFixedThreadPool(maxThreadPool);
         List<Future<?>> tasks = new ArrayList<>();
 
@@ -104,8 +103,8 @@ public class OptimizedWebScrapping {
                                 writeToFile(writePath, "]",true);
                                 DatabaseHandler.processOneWay(flights);
                                 if (page < totalPages) {
-                                    System.out.println("Resetting limit (waiting 70 seconds) before continuing...");
-                                    Thread.sleep(25000*maxThreadPool);
+                                    System.out.println("Resetting limit (waiting " + (28000*maxThreadPool)/1000  +" seconds) before continuing...");
+                                    Thread.sleep(28000*maxThreadPool);
                                 }
 
                             }
@@ -154,8 +153,8 @@ public class OptimizedWebScrapping {
                                 writeToFile(writePath, "]",true);
 
                                 if (page < totalPages) {
-                                    System.out.println("Resetting limit (waiting 70 seconds) before continuing...");
-                                    Thread.sleep(25000*maxThreadPool);
+                                    System.out.println("Resetting limit (waiting " + (28000*maxThreadPool)/1000 +" seconds) before continuing...");
+                                    Thread.sleep(28000*maxThreadPool);
                                 }
                             }
 

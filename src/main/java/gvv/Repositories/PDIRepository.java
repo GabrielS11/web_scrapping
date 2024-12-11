@@ -11,5 +11,6 @@ public interface PDIRepository<T, ID> {
     void deleteById(ID id);
     T findOrCreate(String parameter, String value, T entity);
     void initializeCache(String parameter);
+    void close();
 
 }

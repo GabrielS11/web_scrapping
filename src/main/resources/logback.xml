@@ -4,9 +4,14 @@
             <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
+
+    <!-- Root logger -->
     <root level="ERROR">
         <appender-ref ref="CONSOLE" />
     </root>
-    <logger name="org.asynchttpclient" level="ERROR" />
-    <logger name="org.openqa.selenium" level="ERROR" />
+
+    <!-- Suppress Hibernate logs -->
+    <logger name="org.hibernate" level="ERROR" />
+    <logger name="org.hibernate.SQL" level="OFF" />
+    <logger name="org.hibernate.type" level="OFF" />
 </configuration>
