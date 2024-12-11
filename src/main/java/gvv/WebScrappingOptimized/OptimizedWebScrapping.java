@@ -85,7 +85,7 @@ public class OptimizedWebScrapping {
                         try {
                             int totalPages;
                             // buscar o total de páginas daquela partida, para aquele destino e para aquela classe
-                            if(false) {
+                            if(true) {
                                 totalPages = getTotalPages(driver, ONE_WAY_URL, departure, destination, departureDate, LocalDateTime.now(), adultsQt, flightClass);
                                 for (int page = 1; page <= totalPages; page++) {
                                     System.out.printf("Processing page %d/%d for %s -> %s [ONE WAY] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
@@ -127,36 +127,36 @@ public class OptimizedWebScrapping {
                             }
 
 
+                            if(false) {
+                                // IDA E VOLTA
+                                totalPages = getTotalPages(driver, ROUND_TRIP_URL, departure, destination, departureDate, returnDate, adultsQt, flightClass);
+                                for (int page = 1; page <= totalPages; page++) {
+                                    System.out.printf("Processing page %d/%d for %s -> %s [ROUNDTRIP] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
 
-                            // IDA E VOLTA
-                            totalPages = getTotalPages(driver, ROUND_TRIP_URL, departure, destination, departureDate, returnDate, adultsQt, flightClass);
-                            for (int page = 1; page <= totalPages; page++) {
-                                System.out.printf("Processing page %d/%d for %s -> %s [ROUNDTRIP] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
+                                    String pageUrl = ROUND_TRIP_URL.replace("{{DEPARTURE_CITY_CODE}}", departure)
+                                            .replace("{{ARRIVAL_CITY_CODE}}", destination)
+                                            .replace("{{ADULTS_QUANTITY}}", String.valueOf(adultsQt))
+                                            .replace("{{FLIGHT_CLASS}}", flightClass.name().toUpperCase())
+                                            .replace("{{DEPARTURE_DATE}}", departureDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                            .replace("{{RETURN_DATE}}", returnDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                            .replace("{{PAGE_NUMBER}}", String.valueOf(page));
 
-                                String pageUrl = ROUND_TRIP_URL.replace("{{DEPARTURE_CITY_CODE}}", departure)
-                                        .replace("{{ARRIVAL_CITY_CODE}}", destination)
-                                        .replace("{{ADULTS_QUANTITY}}", String.valueOf(adultsQt))
-                                        .replace("{{FLIGHT_CLASS}}", flightClass.name().toUpperCase())
-                                        .replace("{{DEPARTURE_DATE}}", departureDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                                        .replace("{{RETURN_DATE}}", returnDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                                        .replace("{{PAGE_NUMBER}}", String.valueOf(page));
+                                    List<FlightRoundTripData> flights = OptimizedRoundTripScrapping.processPage(driver, pageUrl, departure, destination, departureDate).stream().peek(flightData -> {
+                                        flightData.setDepartureCity(departure);
+                                        flightData.setDepartureCity(destination);
+                                        flightData.getFlightOutward().setDepartureCity(departure);
+                                        flightData.getFlightOutward().setDestinationCity(destination);
+                                        flightData.getFlightOutward().setFlightClass(flightClass);
+                                        flightData.getFlightOutward().setAdults(adultsQt);
 
-                                List<FlightRoundTripData> flights = OptimizedRoundTripScrapping.processPage(driver, pageUrl, departure, destination, departureDate).stream().peek(flightData -> {
-                                    flightData.setDepartureCity(departure);
-                                    flightData.setDepartureCity(destination);
-                                    flightData.getFlightOutward().setDepartureCity(departure);
-                                    flightData.getFlightOutward().setDestinationCity(destination);
-                                    flightData.getFlightOutward().setFlightClass(flightClass);
-                                    flightData.getFlightOutward().setAdults(adultsQt);
+                                        flightData.setDepartureAirport(departureAirportName);
+                                        flightData.setDestinationAirport(destinationAirportName);
 
-                                    flightData.setDepartureAirport(departureAirportName);
-                                    flightData.setDestinationAirport(destinationAirportName);
-
-                                    flightData.setDepartureDate(departureDate);
-                                    flightData.setReturnDate(returnDate);
-                                    flightData.getFlightReturn().setFlightClass(flightClass);
-                                    flightData.getFlightReturn().setAdults(adultsQt);
-                                }).toList();
+                                        flightData.setDepartureDate(departureDate);
+                                        flightData.setReturnDate(returnDate);
+                                        flightData.getFlightReturn().setFlightClass(flightClass);
+                                        flightData.getFlightReturn().setAdults(adultsQt);
+                                    }).toList();
 
 
                                 /*String writePath = "./flights/" + departureCityAirport + "/" + String.join(" - ", destinationArr) + "/" + flightClass + "/ROUND-TRIP/" + currentTime.format(DATE_TIME_FORMATTER).replace(" ", "").replace(":", "h") + "m.json";
@@ -168,14 +168,14 @@ public class OptimizedWebScrapping {
                                     writeToFile(writePath, flight.toString() + (i+1 == flights.size() ? "" : "," ), true);
                                 }
                                 writeToFile(writePath, "]",true);*/
-                                DatabaseHandler.processRoundTrip(flights);
+                                    DatabaseHandler.processRoundTrip(flights);
 
-                                if (page < totalPages) {
-                                    System.out.println("Resetting limit (waiting " + (38000*maxThreadPool)/1000 +" seconds) before continuing...");
-                                    Thread.sleep(38000*maxThreadPool);
+                                    if (page < totalPages) {
+                                        System.out.println("Resetting limit (waiting " + (38000 * maxThreadPool) / 1000 + " seconds) before continuing...");
+                                        Thread.sleep(38000 * maxThreadPool);
+                                    }
                                 }
                             }
-
 
                         } catch (Exception e) {
                             e.printStackTrace();
