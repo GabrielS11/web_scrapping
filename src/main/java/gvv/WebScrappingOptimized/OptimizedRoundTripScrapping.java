@@ -21,7 +21,7 @@ public class OptimizedRoundTripScrapping {
     public static List<FlightRoundTripData> processPage(WebDriver driver, String pageUrl, String departure, String destination, LocalDateTime date) {
 
         final List<FlightRoundTripData> flights = new ArrayList<>();
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(8));
         try {
             for(int i = 0; i < MAX_RETRIES; i++) {
                 driver.get(pageUrl);
@@ -40,10 +40,16 @@ public class OptimizedRoundTripScrapping {
             flightElements.forEach(flightElement -> {
                 try {
                     FlightRoundTripData trip = new FlightRoundTripData();
+                    trip.setRetrievedDate(date);
                     trip.setDepartureCity(departure);
                     trip.setDestinationCity(destination);
                     for(int segment = 1; segment <= 2; segment++) {
                         FlightOneWayData flight = new FlightOneWayData();
+
+
+
+
+
 
 
                         WebElement departureDestinationElement = flightElement.findElement(By.xpath(String.format("(.//div[contains(@class, 'FlightCardBound-desktop-module__segmentDetails___1zsby')]//div[contains(@class, 'Stack-module__root___ohshd Stack-module__root--direction-row___3r3Pe Stack-module__root--grow-false___eaLO-')])[%d]", segment)));
@@ -71,8 +77,12 @@ public class OptimizedRoundTripScrapping {
                         } else flight.setOriginalPrice(Double.parseDouble(priceElement));
 
                         if(segment == 1){
+                            flight.setDepartureCity(departure);
+                            flight.setDestinationCity(destination);
                             trip.setFlightOutward(flight);
                         } else {
+                            flight.setDepartureCity(destination);
+                            flight.setDestinationCity(departure);
                             trip.setFlightReturn(flight);
                         }
 
@@ -108,7 +118,7 @@ public class OptimizedRoundTripScrapping {
                                 String departureCity = driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_segment_%d']//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and translate(substring-after(@data-testid, 'timeline_leg_'), '0123456789', '') = ''])[%d]", c, stopPos + 1))).getText().split("\n")[1].split(" ")[0];
                                 String destinationCity = driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_segment_%d']//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and translate(substring-after(@data-testid, 'timeline_leg_'), '0123456789', '') = ''])[%d]", c, stopPos + 1))).getText().split("\n")[3].split(" ")[0];
                                 stop.setDepartureCity(departureCity);
-                                stop.setDepartureCity(destinationCity);
+                                stop.setDestinationCity(destinationCity);
 
 
                                 String departureDateText = driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_segment_%d']//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and translate(substring-after(@data-testid, 'timeline_leg_'), '0123456789', '') = ''])[%d]//div[@data-testid='timeline_location_timestamp_departure']", c, stopPos+1))).getText();
@@ -120,6 +130,12 @@ public class OptimizedRoundTripScrapping {
                                 stop.setCompanyName(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_segment_%d']//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and translate(substring-after(@data-testid, 'timeline_leg_'), '0123456789', '') = ''])[%d]//div[@data-testid='timeline_leg_info_carrier']", c, stopPos+1))).getText());
 
                                 stop.setAirPlaneNumber(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_segment_%d']//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and translate(substring-after(@data-testid, 'timeline_leg_'), '0123456789', '') = ''])[%d]//div[@data-testid='timeline_leg_info_flight_number_and_class']", c, stopPos+1))).getText().split(" ")[0]);
+                                if(stopPos == 0 || stopPos+1 == totalStops){
+                                    flight.setAirPlaneNumber(stop.getAirPlaneNumber());
+                                }
+                                if(flight.getAirPlaneNumber() == null){
+                                    System.out.println("why?");
+                                }
                                 flight.addStop(stop);
                             }
                             if(c == 0){

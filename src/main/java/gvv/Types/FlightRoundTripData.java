@@ -15,6 +15,8 @@ public class FlightRoundTripData {
     private LocalDateTime departureDate;
     private LocalDateTime returnDate;
 
+    private LocalDateTime retrievedDate;
+
     private FlightOneWayData flightOutward;
     private FlightOneWayData flightReturn;
 
@@ -36,6 +38,14 @@ public class FlightRoundTripData {
         return this;
     }
 
+    public LocalDateTime getRetrievedDate() {
+        return retrievedDate;
+    }
+
+    public FlightRoundTripData setRetrievedDate(LocalDateTime retrievedDate) {
+        this.retrievedDate = retrievedDate;
+        return this;
+    }
 
     public FlightOneWayData getFlightOutward() {
         return flightOutward;
@@ -113,7 +123,7 @@ public class FlightRoundTripData {
         trip.setOutwardAirport(outwardFlight.getDepartureAirport());
         trip.setReturnAirport(returnFlight.getDepartureAirport());
 
-
+        trip.setRetrievedDate(this.retrievedDate.atZone(ZoneId.systemDefault()).toInstant());
 
         trip.setFlightType("ROUNDTRIP");
 

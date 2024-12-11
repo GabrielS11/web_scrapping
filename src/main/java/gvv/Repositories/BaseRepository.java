@@ -1,5 +1,6 @@
 package gvv.Repositories;
 
+import gvv.WebScrappingOptimized.DatabaseHandler;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
 
-    private final EntityManager entityManager = Persistence.createEntityManagerFactory("default").createEntityManager();
+
     private final Class<T> entityType;
     private final Map<String, T> cache = new HashMap<>();
 
@@ -20,15 +21,20 @@ public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
         this.entityType = entityType;
     }
 
+    protected EntityManager getEntityManager() {
+        return DatabaseHandler.getEntityManager();
+    }
+
     @Override
     public T save(T entity) {
-        EntityTransaction transaction = entityManager.getTransaction();
+        EntityManager em = getEntityManager();
+        EntityTransaction transaction = em.getTransaction();
         boolean isNewTransaction = !transaction.isActive();
         try {
             if (isNewTransaction) {
                 transaction.begin();
             }
-            T savedEntity = entityManager.merge(entity);
+            T savedEntity = getEntityManager().merge(entity);
             if (isNewTransaction) {
                 transaction.commit();
             }
@@ -44,17 +50,19 @@ public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
 
     @Override
     public Optional<T> findById(ID id) {
-        T entity = entityManager.find(entityType, id);
+        EntityManager em = getEntityManager();
+        T entity = em.find(entityType, id);
         return Optional.ofNullable(entity);
     }
 
     @Override
     public List<T> findAll() {
-        return entityManager.createQuery("SELECT e FROM " + entityType.getSimpleName() + " e", entityType).getResultList();
+        EntityManager em = getEntityManager();
+        List<T> ret = em.createQuery("SELECT e FROM " + entityType.getSimpleName() + " e", entityType).getResultList();
+        return ret;
     }
 
     @Override
-    @Transactional
     public T update(T entity) {
         return save(entity);
     }
@@ -62,9 +70,10 @@ public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
     @Override
     @Transactional
     public void deleteById(ID id) {
-        T entity = entityManager.find(entityType, id);
+        EntityManager em = getEntityManager();
+        T entity = em.find(entityType, id);
         if (entity != null) {
-            entityManager.remove(entity);
+            em.remove(entity);
         }
     }
 
@@ -74,8 +83,9 @@ public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
         if (cachedEntity != null) {
             return cachedEntity;
         }
+        EntityManager em = getEntityManager();
         String query = "SELECT e FROM " + entityType.getSimpleName() + " e WHERE e." + parameter + " = :value";
-        T existingEntity = entityManager.createQuery(query, entityType)
+        T existingEntity = em.createQuery(query, entityType)
                 .setParameter("value", value)
                 .getResultStream()
                 .findFirst()
@@ -89,8 +99,9 @@ public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
 
     @Override
     public final void initializeCache(String parameter) {
+        EntityManager em = getEntityManager();
         String query = "SELECT e FROM " + entityType.getSimpleName() + " e";
-        List<T> entities = entityManager.createQuery(query, entityType).getResultList();
+        List<T> entities = em.createQuery(query, entityType).getResultList();
 
         for (T entity : entities) {
             try {
@@ -104,6 +115,6 @@ public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
 
     @Override
     public void close() {
-        this.entityManager.close();
+
     }
 }

@@ -21,7 +21,7 @@ public class OptimizedOneWayScrapping {
 
         final List<FlightOneWayData> flights = new ArrayList<>();
         // Define que o driver deve tentar durante 5 segundos procurar pelo elemento, se encontrar antes dos 5 segundos da resume, se não ignora o atual
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(8));
         try {
             // Tentativa de aceder a página em caso tenhamos alcançado o resource limit (erro 429) Aguarda 220 segundos para voltar ao normal.
             for(int i = 0; i < MAX_RETRIES; i++) {

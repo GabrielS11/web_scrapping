@@ -52,7 +52,7 @@ public class OptimizedWebScrapping {
 
     public static void startWebScrapping() {
         // Número de Threads a ocorrer em simultâneo - Isto é irá acontecer o scrapping to ECONOMY E O PREMIUM_ECONOMY ao mesmo tempo, por exemplo
-        final int maxThreadPool = 2;
+        final int maxThreadPool = 1;
         ExecutorService executor = Executors.newFixedThreadPool(maxThreadPool);
         List<Future<?>> tasks = new ArrayList<>();
 
@@ -79,47 +79,50 @@ public class OptimizedWebScrapping {
                     tasks.add(executor.submit(() -> {
                         WebDriver driver = getWebDriver(); // Cada thread usa seu próprio WebDriver
                         try {
+                            int totalPages;
                             // buscar o total de páginas daquela partida, para aquele destino e para aquela classe
-                            int totalPages = getTotalPages(driver, ONE_WAY_URL, departure, destination, departureDate, LocalDateTime.now(), adultsQt, flightClass);
-                            for (int page = 1; page <= totalPages; page++) {
-                                System.out.printf("Processing page %d/%d for %s -> %s [ONE WAY] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
+                            if(false) {
+                                totalPages = getTotalPages(driver, ONE_WAY_URL, departure, destination, departureDate, LocalDateTime.now(), adultsQt, flightClass);
+                                for (int page = 1; page <= totalPages; page++) {
+                                    System.out.printf("Processing page %d/%d for %s -> %s [ONE WAY] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
 
-                                // Preparar o URL
-                                String pageUrl = ONE_WAY_URL.replace("{{DEPARTURE_CITY_CODE}}", departure)
-                                        .replace("{{ARRIVAL_CITY_CODE}}", destination)
-                                        .replace("{{ADULTS_QUANTITY}}", String.valueOf(adultsQt))
-                                        .replace("{{FLIGHT_CLASS}}", flightClass.name().toUpperCase())
-                                        .replace("{{DEPARTURE_DATE}}", departureDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                                        .replace("{{PAGE_NUMBER}}", String.valueOf(page));
-
-
-                                // Invocar o scrapping to OneWay - Ida apenas.
-                                List<FlightOneWayData> flights = OptimizedOneWayScrapping.processPage(driver, pageUrl, departure, destination, departureDate).stream().peek(flightData -> {
-                                    flightData.setFlightClass(flightClass);
-                                    flightData.setAdults(adultsQt);
-                                    flightData.setDepartureAirport(departureAirportName);
-                                    flightData.setDestinationAirport(destinationAirportName);
-                                }).toList();
+                                    // Preparar o URL
+                                    String pageUrl = ONE_WAY_URL.replace("{{DEPARTURE_CITY_CODE}}", departure)
+                                            .replace("{{ARRIVAL_CITY_CODE}}", destination)
+                                            .replace("{{ADULTS_QUANTITY}}", String.valueOf(adultsQt))
+                                            .replace("{{FLIGHT_CLASS}}", flightClass.name().toUpperCase())
+                                            .replace("{{DEPARTURE_DATE}}", departureDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                            .replace("{{PAGE_NUMBER}}", String.valueOf(page));
 
 
-                                String writePath = "./flights/" + departureCityAirport + "/" + String.join(" - ", destinationArr) + "/" + flightClass + "/ONE-WAY/" + currentTime.format(DATE_TIME_FORMATTER).replace(" ", "").replace(":", "h") + "m.json";
-                                writeToFile(writePath, "[", false);
-                                for(int i = 0; i < flights.size(); i++) {
-                                    FlightOneWayData flight = flights.get(i);
-                                    //System.out.print(flight);
+                                    // Invocar o scrapping to OneWay - Ida apenas.
+                                    List<FlightOneWayData> flights = OptimizedOneWayScrapping.processPage(driver, pageUrl, departure, destination, departureDate).stream().peek(flightData -> {
+                                        flightData.setFlightClass(flightClass);
+                                        flightData.setAdults(adultsQt);
+                                        flightData.setDepartureAirport(departureAirportName);
+                                        flightData.setDestinationAirport(destinationAirportName);
+                                    }).toList();
 
-                                    writeToFile(writePath, flight.toString() + (i+1 == flights.size() ? "" : "," ), true);
+
+                                    /*String writePath = "./flights/" + departureCityAirport + "/" + String.join(" - ", destinationArr) + "/" + flightClass + "/ONE-WAY/" + currentTime.format(DATE_TIME_FORMATTER).replace(" ", "").replace(":", "h") + "m.json";
+                                    writeToFile(writePath, "[", false);
+                                    for (int i = 0; i < flights.size(); i++) {
+                                        FlightOneWayData flight = flights.get(i);
+                                        System.out.print(flight);
+
+                                        writeToFile(writePath, flight.toString() + (i + 1 == flights.size() ? "" : ","), true);
+                                    }
+                                    //writeToFile(writePath, "]", true);*/
+                                    DatabaseHandler.processOneWay(flights);
+                                    if (page < totalPages) {
+                                        System.out.println("Resetting limit (waiting " + (38000 * maxThreadPool) / 1000 + " seconds) before continuing...");
+                                        Thread.sleep(38000 * maxThreadPool);
+                                    }
+
                                 }
-                                writeToFile(writePath, "]",true);
-                                DatabaseHandler.processOneWay(flights);
-                                if (page < totalPages) {
-                                    System.out.println("Resetting limit (waiting " + (38000*maxThreadPool)/1000  +" seconds) before continuing...");
-                                    Thread.sleep(38000*maxThreadPool);
-                                }
-
                             }
 
-                            if(true) return;
+
 
                             // IDA E VOLTA
                             totalPages = getTotalPages(driver, ROUND_TRIP_URL, departure, destination, departureDate, returnDate, adultsQt, flightClass);
@@ -152,7 +155,7 @@ public class OptimizedWebScrapping {
                                 }).toList();
 
 
-                                String writePath = "./flights/" + departureCityAirport + "/" + String.join(" - ", destinationArr) + "/" + flightClass + "/ROUND-TRIP/" + currentTime.format(DATE_TIME_FORMATTER).replace(" ", "").replace(":", "h") + "m.json";
+                                /*String writePath = "./flights/" + departureCityAirport + "/" + String.join(" - ", destinationArr) + "/" + flightClass + "/ROUND-TRIP/" + currentTime.format(DATE_TIME_FORMATTER).replace(" ", "").replace(":", "h") + "m.json";
                                 writeToFile(writePath, "[", false);
                                 for(int i = 0; i < flights.size(); i++) {
                                     FlightRoundTripData flight = flights.get(i);
@@ -160,7 +163,8 @@ public class OptimizedWebScrapping {
 
                                     writeToFile(writePath, flight.toString() + (i+1 == flights.size() ? "" : "," ), true);
                                 }
-                                writeToFile(writePath, "]",true);
+                                writeToFile(writePath, "]",true);*/
+                                DatabaseHandler.processRoundTrip(flights);
 
                                 if (page < totalPages) {
                                     System.out.println("Resetting limit (waiting " + (38000*maxThreadPool)/1000 +" seconds) before continuing...");
