@@ -1,5 +1,5 @@
--- MariaDB (MYSQL)
 -- Criar a base de dados
+DROP DATABASE IF EXISTS PDI_FLIGHT;
 CREATE DATABASE IF NOT EXISTS PDI_FLIGHT;
 USE PDI_FLIGHT;
 
@@ -28,7 +28,6 @@ CREATE TABLE COUNTRIES (
 CREATE TABLE CITIES (
                         ID INT(6) AUTO_INCREMENT PRIMARY KEY,
                         COUNTRY_FK INT(6) NOT NULL,
-                        CODE VARCHAR(80) NOT NULL,
                         DESCRIPTION VARCHAR(300) NOT NULL,
                         FOREIGN KEY (COUNTRY_FK) REFERENCES COUNTRIES(ID)
 );
@@ -37,23 +36,24 @@ CREATE TABLE CITIES (
 CREATE TABLE AIRPORTS (
                           ID INT(6) AUTO_INCREMENT PRIMARY KEY,
                           CITY_FK INT(6) NOT NULL,
-                          CODE VARCHAR(80) NOT NULL,
                           DESCRIPTION VARCHAR(300) NOT NULL,
                           FOREIGN KEY (CITY_FK) REFERENCES CITIES(ID)
 );
+
+
 
 -- Tabela: TRIP
 CREATE TABLE TRIP (
                       ID INT(6) AUTO_INCREMENT PRIMARY KEY,
                       FLIGHT_TYPE VARCHAR(50) NOT NULL CHECK (FLIGHT_TYPE IN ('ROUNDTRIP', 'ONEWAY')),
                       RETRIEVED_DATE DATETIME NOT NULL DEFAULT NOW(),
-                      FLIGHT_CHOICE INT(6) NOT NULL check ( FLIGHT_CHOICE in ('ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS', 'FIRST')),
-                      DEPARTURE_DATE DATETIME NOT NULL,
-                      ARRIVAL_DATE DATETIME NOT NULL,
-                      DEPARTURE_AIRPORT INT(6) NOT NULL,
-                      ARRIVAL_AIRPORT INT(6) NOT NULL,
-                      FOREIGN KEY (DEPARTURE_AIRPORT) REFERENCES AIRPORTS(ID),
-                      FOREIGN KEY (ARRIVAL_AIRPORT) REFERENCES AIRPORTS(ID)
+                      FLIGHT_CHOICE VARCHAR(50) NOT NULL check ( FLIGHT_CHOICE in ('ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS', 'FIRST')),
+                      OUTWARD_DATE DATETIME NOT NULL,
+                      RETURN_DATE DATETIME,
+                      OUTWARD_AIRPORT INT(6) NOT NULL,
+                      RETURN_AIRPORT INT(6),
+                      FOREIGN KEY (OUTWARD_AIRPORT) REFERENCES AIRPORTS(ID),
+                      FOREIGN KEY (RETURN_AIRPORT) REFERENCES AIRPORTS(ID)
 );
 
 -- Tabela: FLIGHT
@@ -73,17 +73,21 @@ CREATE TABLE FLIGHT (
                         FOREIGN KEY (ARRIVAL_AIRPORT) REFERENCES AIRPORTS(ID),
                         FOREIGN KEY (TRIP_FK) REFERENCES TRIP(ID)
 );
-
 -- Tabela: FLIGHT_STOPS
 CREATE TABLE FLIGHT_STOPS (
                               ID INT(6) AUTO_INCREMENT PRIMARY KEY,
                               NAME VARCHAR(400) NOT NULL,
+                              FLIGHT_FK int(6) NOT NULL,
                               AIRPLANE_FK INT(6) NOT NULL,
                               DEPARTURE_DATE DATETIME NOT NULL,
                               ARRIVAL_DATE DATETIME NOT NULL,
                               DEPARTURE_AIRPORT INT(6) NOT NULL,
                               ARRIVAL_AIRPORT INT(6) NOT NULL,
+                              FOREIGN KEY (FLIGHT_FK) REFERENCES FLIGHT(ID),
                               FOREIGN KEY (AIRPLANE_FK) REFERENCES AIRPLANES(ID),
                               FOREIGN KEY (DEPARTURE_AIRPORT) REFERENCES AIRPORTS(ID),
                               FOREIGN KEY (ARRIVAL_AIRPORT) REFERENCES AIRPORTS(ID)
 );
+
+
+
