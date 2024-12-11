@@ -132,7 +132,6 @@ public class OptimizedOneWayScrapping {
                         OptimizedWebScrapping.doNothingToHaveABreakPoint();
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
                     OptimizedWebScrapping.doNothingToHaveABreakPoint();
                     return false;
                 }

@@ -46,7 +46,11 @@ public class OptimizedWebScrapping {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 
     public static void main(String[] args) {
-        startWebScrapping();
+        try {
+            startWebScrapping();
+        } catch (Exception ex){
+            System.out.println("An error message was detected but ingored.");
+        }
     }
 
 

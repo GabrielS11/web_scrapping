@@ -150,7 +150,6 @@ public class OptimizedRoundTripScrapping {
                     WebElement closeButton = driver.findElement(By.xpath("//div[contains(@class, 'Overlay-module__content___+pCjC')]//button[@aria-label='Close']"));
                     closeButton.click();
                 } catch (Exception e) {
-                    e.printStackTrace();
                     OptimizedWebScrapping.doNothingToHaveABreakPoint();
                 }
                 return true;
