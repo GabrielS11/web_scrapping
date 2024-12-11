@@ -138,8 +138,7 @@ public class OptimizedOneWayScrapping {
                 return true;
             }).collect(Collectors.toCollection(ArrayList::new));
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
             OptimizedWebScrapping.doNothingToHaveABreakPoint();
         }
 

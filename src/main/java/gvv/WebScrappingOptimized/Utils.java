@@ -28,8 +28,8 @@ public class Utils {
             return AIRPORTS;
 
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ignored) {
+
         }
         return AIRPORTS;
     }

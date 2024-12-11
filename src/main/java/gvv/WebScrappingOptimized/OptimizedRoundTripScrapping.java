@@ -158,8 +158,7 @@ public class OptimizedRoundTripScrapping {
 
 
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
             OptimizedWebScrapping.doNothingToHaveABreakPoint();
         }
 

@@ -52,8 +52,8 @@ public class DatabaseHandler {
                             flightStopRepository.save(stopFlight);
                         }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (Exception ignored) {
+
                 }
             }
         } finally {
@@ -115,8 +115,8 @@ public class DatabaseHandler {
                     }
                 }
 
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception ignored) {
+
             }
         }
         } finally {

@@ -25,9 +25,9 @@ public class OptimizedWebScrapping {
 
 
     // VITOR DESKTOP
-    private static final String CHROME_DRIVEER_PATH = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
+    //private static final String CHROME_DRIVEER_PATH = "D:\\Tools\\chromedriver-win64\\chromedriver.exe";
     // VITOR PORTÁTIL
-    //private static final String CHROME_DRIVEER_PATH = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
+    private static final String CHROME_DRIVEER_PATH = "C:\\Drivers\\chromedriver-win64\\chromedriver.exe";
 
     private static final String ONE_WAY_URL = "https://flights.booking.com/flights/{{DEPARTURE_CITY_CODE}}-{{ARRIVAL_CITY_CODE}}?type=ONEWAY&from={{DEPARTURE_CITY_CODE}}&to={{ARRIVAL_CITY_CODE}}&cabinClass={{FLIGHT_CLASS}}&depart={{DEPARTURE_DATE}}&adults={{ADULTS_QUANTITY}}&page={{PAGE_NUMBER}}";
     private static final String ROUND_TRIP_URL = "https://flights.booking.com/flights/{{DEPARTURE_CITY_CODE}}-{{ARRIVAL_CITY_CODE}}/?type=ROUNDTRIP&adults={{ADULTS_QUANTITY}}&cabinClass={{FLIGHT_CLASS}}&from={{DEPARTURE_CITY_CODE}}&to={{ARRIVAL_CITY_CODE}}&depart={{DEPARTURE_DATE}}&return={{RETURN_DATE}}&page={{PAGE_NUMBER}}";
@@ -177,8 +177,8 @@ public class OptimizedWebScrapping {
                                 }
                             }
 
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        } catch (Exception ignored) {
+
                         } finally {
                             driver.quit(); // Fechar o WebDriver ao terminar
                         }
@@ -194,8 +194,7 @@ public class OptimizedWebScrapping {
         tasks.forEach(task -> {
             try {
                 task.get();
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception ignored) {
             }
         });
         executor.shutdown();
@@ -217,9 +216,7 @@ public class OptimizedWebScrapping {
                 ((JavascriptExecutor) driver).executeScript("arguments[0].style.display='none';", overlay);
                 return true;
             }
-        } catch (TimeoutException ignored) {
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         } finally {
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         }
@@ -351,8 +348,7 @@ public class OptimizedWebScrapping {
                 writer.write(content);
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ignored) {
         }
     }
 }

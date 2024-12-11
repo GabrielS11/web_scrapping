@@ -90,4 +90,3 @@ CREATE TABLE FLIGHT_STOPS (
 );
 
 
-
