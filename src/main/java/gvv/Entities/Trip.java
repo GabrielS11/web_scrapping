@@ -20,22 +20,46 @@ public class Trip {
     @Column(name = "RETRIEVED_DATE", nullable = false)
     private Instant retrievedDate;
 
-    @Column(name = "FLIGHT_CHOICE", nullable = false)
-    private Integer flightChoice;
+    @Column(name = "FLIGHT_CHOICE", nullable = false, length = 50)
+    private String flightChoice;
 
-    @Column(name = "DEPARTURE_DATE", nullable = false)
-    private Instant departureDate;
+    @Column(name = "OUTWARD_DATE", nullable = false)
+    private Instant outwardDate;
 
-    @Column(name = "ARRIVAL_DATE", nullable = false)
-    private Instant arrivalDate;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "DEPARTURE_AIRPORT", nullable = false)
-    private Airport departureAirport;
+    @Column(name = "RETURN_DATE", nullable = true)
+    private Instant returnDate;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ARRIVAL_AIRPORT", nullable = false)
-    private Airport arrivalAirport;
+    @JoinColumn(name = "OUTWARD_AIRPORT", nullable = false)
+    private Airport outwardAirport;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "RETURN_AIRPORT", nullable = true)
+    private Airport returnAirport;
+
+    @Transient
+    private Flight outwardFlight; // ida
+
+    @Transient
+    private Flight returnFlight; // retorno
+
+    public Flight getOutwardFlight() {
+        return outwardFlight;
+    }
+
+    public Trip setOutwardFlight(Flight outwardFlight) {
+        this.outwardFlight = outwardFlight;
+        return this;
+    }
+
+    public Flight getReturnFlight() {
+        return returnFlight;
+    }
+
+    public Trip setReturnFlight(Flight returnFlight) {
+        this.returnFlight = returnFlight;
+        return this;
+    }
 
     public Integer getId() {
         return id;
@@ -61,44 +85,44 @@ public class Trip {
         this.retrievedDate = retrievedDate;
     }
 
-    public Integer getFlightChoice() {
+    public String getFlightChoice() {
         return flightChoice;
     }
 
-    public void setFlightChoice(Integer flightChoice) {
+    public void setFlightChoice(String flightChoice) {
         this.flightChoice = flightChoice;
     }
 
-    public Instant getDepartureDate() {
-        return departureDate;
+    public Instant getOutwardDate() {
+        return outwardDate;
     }
 
-    public void setDepartureDate(Instant departureDate) {
-        this.departureDate = departureDate;
+    public void setOutwardDate(Instant outwardDate) {
+        this.outwardDate = outwardDate;
     }
 
-    public Instant getArrivalDate() {
-        return arrivalDate;
+    public Instant getReturnDate() {
+        return returnDate;
     }
 
-    public void setArrivalDate(Instant arrivalDate) {
-        this.arrivalDate = arrivalDate;
+    public void setReturnDate(Instant returnDate) {
+        this.returnDate = returnDate;
     }
 
-    public Airport getDepartureAirport() {
-        return departureAirport;
+    public Airport getOutwardAirport() {
+        return outwardAirport;
     }
 
-    public void setDepartureAirport(Airport departureAirport) {
-        this.departureAirport = departureAirport;
+    public void setOutwardAirport(Airport outwardAirport) {
+        this.outwardAirport = outwardAirport;
     }
 
-    public Airport getArrivalAirport() {
-        return arrivalAirport;
+    public Airport getReturnAirport() {
+        return returnAirport;
     }
 
-    public void setArrivalAirport(Airport arrivalAirport) {
-        this.arrivalAirport = arrivalAirport;
+    public void setReturnAirport(Airport returnAirport) {
+        this.returnAirport = returnAirport;
     }
 
 }

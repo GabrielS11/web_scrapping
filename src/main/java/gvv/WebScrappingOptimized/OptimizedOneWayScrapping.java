@@ -20,7 +20,7 @@ public class OptimizedOneWayScrapping {
     public static List<FlightOneWayData> processPage(WebDriver driver, String pageUrl, String departure, String destination, LocalDateTime date) {
 
         final List<FlightOneWayData> flights = new ArrayList<>();
-        driver.manage().timeouts().implicitlyWait(Duration.ofMillis(10));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
         try {
             for(int i = 0; i < MAX_RETRIES; i++) {
                 driver.get(pageUrl);
@@ -31,11 +31,7 @@ public class OptimizedOneWayScrapping {
                     Thread.sleep(WAITING_TIME_SECONDS * 1000);
                 } else i = MAX_RETRIES;
             }
-
-
-            driver.manage().timeouts().implicitlyWait(Duration.ofMillis(3));
             List<WebElement> flightElements = driver.findElements(By.xpath("//li[contains(@class, 'List-module__item___TMd8E List-module__item--spacing-medium___foMk1')]"));
-
             // Adquirir os valores a partir da página inicial
             flightElements.forEach(flightElement -> {
                 try {
@@ -106,10 +102,14 @@ public class OptimizedOneWayScrapping {
 
 
                                 stop.setAirPlaneNumber(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_leg_info_flight_number_and_class'])[%d]", c))).getText().split(" · ")[0]);
+                                if(c == 1){
+                                    flight.setAirPlaneNumber(stop.getAirPlaneNumber());
+                                }
                                 stop.setFlightClass(FlightClass.getFlightClass(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_leg_info_flight_number_and_class'])[%d]", c))).getText().split(" · ")[1]));
                                 flight.addStop(stop);
                             } else {
                                 flight.setAirPlaneNumber(driver.findElement(By.xpath(String.format("(//div[@data-testid='timeline_leg_info_flight_number_and_class'])[%d]", c))).getText().split(" ")[0]);
+                                System.out.println();
                             }
                         } catch (Exception ex) {
                             //ex.printStackTrace();

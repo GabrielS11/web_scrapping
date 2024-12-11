@@ -33,6 +33,18 @@ public class FlightStop {
     @JoinColumn(name = "ARRIVAL_AIRPORT", nullable = false)
     private Airport arrivalAirport;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "FLIGHT_FK", nullable = false)
+    private Flight flightFk;
+
+    public Flight getFlightFk() {
+        return flightFk;
+    }
+
+    public void setFlightFk(Flight flightFk) {
+        this.flightFk = flightFk;
+    }
+
     public Integer getId() {
         return id;
     }

@@ -8,7 +8,7 @@
         <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/PDI_flight</property>
         <property name="hibernate.connection.username">root</property>
         <property name="hibernate.connection.password"/>
-        <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQL8Dialect</property>
 
         <!-- Hibernate settings -->
         <property name="hibernate.show_sql">true</property>

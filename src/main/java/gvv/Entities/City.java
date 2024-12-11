@@ -14,9 +14,6 @@ public class City {
     @JoinColumn(name = "COUNTRY_FK", nullable = false)
     private gvv.Entities.Country countryFk;
 
-    @Column(name = "CODE", nullable = false, length = 80)
-    private String code;
-
     @Column(name = "DESCRIPTION", nullable = false, length = 300)
     private String description;
 
@@ -34,14 +31,6 @@ public class City {
 
     public void setCountryFk(gvv.Entities.Country countryFk) {
         this.countryFk = countryFk;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
     }
 
     public String getDescription() {

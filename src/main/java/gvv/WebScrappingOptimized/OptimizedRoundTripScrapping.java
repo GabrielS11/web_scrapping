@@ -21,7 +21,7 @@ public class OptimizedRoundTripScrapping {
     public static List<FlightRoundTripData> processPage(WebDriver driver, String pageUrl, String departure, String destination, LocalDateTime date) {
 
         final List<FlightRoundTripData> flights = new ArrayList<>();
-        driver.manage().timeouts().implicitlyWait(Duration.ofMillis(10));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
         try {
             for(int i = 0; i < MAX_RETRIES; i++) {
                 driver.get(pageUrl);
@@ -33,7 +33,7 @@ public class OptimizedRoundTripScrapping {
                 } else i = MAX_RETRIES;
             }
 
-            driver.manage().timeouts().implicitlyWait(Duration.ofMillis(3));
+
 
             List<WebElement> flightElements = driver.findElements(By.xpath("//li[contains(@class, 'List-module__item___TMd8E List-module__item--spacing-medium___foMk1')]"));
             // Adquirir os valores a partir da página inicial

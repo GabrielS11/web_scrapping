@@ -1,6 +1,10 @@
 package gvv.Types;
 
+import gvv.Entities.*;
+import gvv.WebScrappingOptimized.Utils;
+
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -181,6 +185,8 @@ public class FlightOneWayData {
         return this;
     }
 
+
+
     @Override
     public String toString() {
         return "{" +
@@ -216,6 +222,101 @@ public class FlightOneWayData {
         }
         stopsJson.append("]");
         return stopsJson.toString();
+    }
+
+    public Flight asFlight() throws Exception {
+
+        Flight flight = new Flight();
+
+        flight.setIsDirect(isDirect);
+        flight.setDepartureDate(this.departureDate.atZone(ZoneId.systemDefault()).toInstant());
+        flight.setArrivalDate(this.departureDate.atZone(ZoneId.systemDefault()).toInstant());
+        flight.setName(this.name);
+        flight.setDirectionType("DEPARTURE");
+
+        Company company = new Company();
+        company.setName(this.companyName);
+        Airplane airplane = new Airplane();
+        airplane.setCompanyFk(company);
+        airplane.setCode(this.airPlaneNumber);
+        flight.setAirplaneFk(airplane);
+
+        /*
+         *
+         *  DEPARTURE
+         *
+         * */
+
+        if(Utils.getAirport(this.departureCity) == null){
+            throw new Exception("Couldn't find airport for code (" + this.departureCity + ")");
+        } else if (Utils.getAirport(this.destinationCity) == null) throw new Exception("Couldn't find airport for code (" + this.destinationCity + ")");
+
+        Airport departureAirport = new Airport();
+        departureAirport.setDescription(this.departureAirport);
+
+        City departureCity = new City();
+
+        departureCity.setDescription(Utils.getAirport(this.departureCity).getCity());
+
+        Country departureCountry = new Country();
+        departureCountry.setCode(Utils.getAirport(this.departureCity).getCountryCode());
+        departureCountry.setDescription(Utils.getAirport(this.departureCity).getCountry());
+
+        departureCity.setCountryFk(departureCountry);
+
+        departureAirport.setDescription(Utils.getAirport(this.departureCity).getAirportName());
+        departureAirport.setCityFk(departureCity);
+
+        flight.setDepartureAirport(departureAirport);
+
+        /*
+        *
+        *  ARRIVAL
+        *
+        * */
+        Airport arrivalAirport = new Airport();
+        arrivalAirport.setDescription(this.destinationAirport);
+
+        City arrivalCity = new City();
+        arrivalCity.setDescription(Utils.getAirport(this.destinationCity).getCity());
+
+        Country arrivalCountry = new Country();
+        arrivalCountry.setCode(Utils.getAirport(this.destinationCity).getCountryCode());
+        arrivalCountry.setDescription(Utils.getAirport(this.destinationCity).getCountry());
+
+        arrivalCity.setCountryFk(arrivalCountry);
+
+        arrivalAirport.setDescription(Utils.getAirport(this.destinationCity).getAirportName());
+        arrivalAirport.setCityFk(arrivalCity);
+
+        flight.setArrivalAirport(arrivalAirport);
+
+        return flight;
+    }
+
+    public FlightStop asFlightStop() throws Exception {
+        FlightStop stop = new FlightStop();
+        Flight flight = asFlight();
+
+        stop.setAirplaneFk(flight.getAirplaneFk());
+        stop.setArrivalAirport(flight.getArrivalAirport());
+        stop.setDepartureAirport(flight.getDepartureAirport());
+        stop.setName(flight.getName());
+        stop.setArrivalDate(flight.getArrivalDate());
+        stop.setDepartureDate(flight.getDepartureDate());
+        return stop;
+    }
+
+    public Trip asTrip() throws Exception {
+        Trip trip = new Trip();
+        Flight flight = asFlight();
+        trip.setOutwardAirport(flight.getArrivalAirport());
+        trip.setFlightType("ONEWAY");
+        trip.setFlightChoice(this.getFlightClass().name());
+        trip.setOutwardDate(flight.getDepartureDate());
+        trip.setRetrievedDate(this.retrievedDate.atZone(ZoneId.systemDefault()).toInstant());
+        trip.setOutwardFlight(flight);
+        return trip;
     }
 
 }

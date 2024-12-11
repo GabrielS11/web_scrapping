@@ -41,6 +41,18 @@ public class Flight {
     @Column(name = "IS_DIRECT", nullable = false, length = 1)
     private String isDirect;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "TRIP_FK", nullable = false)
+    private Trip tripFk;
+
+    public Trip getTripFk() {
+        return tripFk;
+    }
+
+    public void setTripFk(Trip tripFk) {
+        this.tripFk = tripFk;
+    }
+
     public Integer getId() {
         return id;
     }

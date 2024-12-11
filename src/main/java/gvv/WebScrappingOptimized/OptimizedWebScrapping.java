@@ -1,6 +1,7 @@
 package gvv.WebScrappingOptimized;
 
 import gvv.Types.FlightClass;
+import gvv.Types.FlightOneWayData;
 import gvv.Types.FlightRoundTripData;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -51,7 +52,8 @@ public class OptimizedWebScrapping {
 
 
     public static void startWebScrapping() {
-        ExecutorService executor = Executors.newFixedThreadPool(2); // Pool de 4 threads
+        final int maxThreadPool = 1;
+        ExecutorService executor = Executors.newFixedThreadPool(maxThreadPool);
         List<Future<?>> tasks = new ArrayList<>();
 
         LocalDateTime currentTime = LocalDateTime.now();
@@ -72,8 +74,8 @@ public class OptimizedWebScrapping {
                     tasks.add(executor.submit(() -> {
                         WebDriver driver = getWebDriver(); // Cada thread usa seu próprio WebDriver
                         try {
-                            int totalPages = 0;//getTotalPages(driver, ONE_WAY_URL, departure, destination, departureDate, LocalDateTime.now(), adultsQt, flightClass);
-                            /*for (int page = 1; page <= totalPages; page++) {
+                            int totalPages = getTotalPages(driver, ONE_WAY_URL, departure, destination, departureDate, LocalDateTime.now(), adultsQt, flightClass);
+                            for (int page = 1; page <= totalPages; page++) {
                                 System.out.printf("Processing page %d/%d for %s -> %s [ONE WAY] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
 
                                 String pageUrl = ONE_WAY_URL.replace("{{DEPARTURE_CITY_CODE}}", departure)
@@ -95,17 +97,20 @@ public class OptimizedWebScrapping {
                                 writeToFile(writePath, "[", false);
                                 for(int i = 0; i < flights.size(); i++) {
                                     FlightOneWayData flight = flights.get(i);
-                                    System.out.print(flight);
+                                    //System.out.print(flight);
 
                                     writeToFile(writePath, flight.toString() + (i+1 == flights.size() ? "" : "," ), true);
                                 }
                                 writeToFile(writePath, "]",true);
-
+                                DatabaseHandler.processOneWay(flights);
                                 if (page < totalPages) {
                                     System.out.println("Resetting limit (waiting 70 seconds) before continuing...");
-                                    Thread.sleep(70000);
+                                    Thread.sleep(25000*maxThreadPool);
                                 }
-                            }*/
+
+                            }
+
+                            if(true) return;
 
                             // IDA E VOLTA
                             totalPages = getTotalPages(driver, ROUND_TRIP_URL, departure, destination, departureDate, returnDate, adultsQt, flightClass);
@@ -150,7 +155,7 @@ public class OptimizedWebScrapping {
 
                                 if (page < totalPages) {
                                     System.out.println("Resetting limit (waiting 70 seconds) before continuing...");
-                                    Thread.sleep(70000);
+                                    Thread.sleep(25000*maxThreadPool);
                                 }
                             }
 

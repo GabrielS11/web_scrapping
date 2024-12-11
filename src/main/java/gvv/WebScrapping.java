@@ -535,7 +535,6 @@ public class WebScrapping {
         };
     }
     
-    
     public static void doNothingToHaveABreakPoint(){
     }
 }

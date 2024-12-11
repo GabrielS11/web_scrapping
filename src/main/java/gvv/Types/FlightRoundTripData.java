@@ -1,6 +1,10 @@
 package gvv.Types;
 
+import gvv.Entities.Flight;
+import gvv.Entities.Trip;
+
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 public class FlightRoundTripData {
 
@@ -97,6 +101,31 @@ public class FlightRoundTripData {
                 "\"flightOutward\": " + (flightOutward != null ? flightOutward.toString() : "null") + "," +
                 "\"flightReturn\": " + (flightReturn != null ? flightReturn.toString() : "null") +
                 "}";
+    }
+
+
+    public Trip asTrip() throws Exception {
+        Trip trip = new Trip();
+        Flight outwardFlight = this.flightOutward.asFlight();
+        Flight returnFlight = this.flightReturn.asFlight();
+
+
+        trip.setOutwardAirport(outwardFlight.getDepartureAirport());
+        trip.setReturnAirport(returnFlight.getDepartureAirport());
+
+
+
+        trip.setFlightType("ROUNDTRIP");
+
+
+        trip.setFlightChoice(this.flightOutward.asTrip().getFlightChoice());
+        trip.setOutwardDate(departureDate.atZone(ZoneId.systemDefault()).toInstant());
+        trip.setReturnDate(returnDate.atZone(ZoneId.systemDefault()).toInstant());
+
+        trip.setOutwardFlight(outwardFlight);
+        trip.setReturnFlight(returnFlight);
+
+        return trip;
     }
 
 }
