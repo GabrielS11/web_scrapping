@@ -113,8 +113,8 @@ public class OptimizedWebScrapping {
                                 writeToFile(writePath, "]",true);
                                 DatabaseHandler.processOneWay(flights);
                                 if (page < totalPages) {
-                                    System.out.println("Resetting limit (waiting " + (35000*maxThreadPool)/1000  +" seconds) before continuing...");
-                                    Thread.sleep(35000*maxThreadPool);
+                                    System.out.println("Resetting limit (waiting " + (38000*maxThreadPool)/1000  +" seconds) before continuing...");
+                                    Thread.sleep(38000*maxThreadPool);
                                 }
 
                             }
@@ -163,8 +163,8 @@ public class OptimizedWebScrapping {
                                 writeToFile(writePath, "]",true);
 
                                 if (page < totalPages) {
-                                    System.out.println("Resetting limit (waiting " + (35000*maxThreadPool)/1000 +" seconds) before continuing...");
-                                    Thread.sleep(35000*maxThreadPool);
+                                    System.out.println("Resetting limit (waiting " + (38000*maxThreadPool)/1000 +" seconds) before continuing...");
+                                    Thread.sleep(38000*maxThreadPool);
                                 }
                             }
 
@@ -193,6 +193,8 @@ public class OptimizedWebScrapping {
         executor.shutdown();
     }
 
+
+    // Remover o modal de no flights, no caso ele não remove, apenas esconde, porque se removermos o site solta um erro, então preferimos esconder.
     public static boolean removeNoFlightsModal(WebDriver driver) {
         try {
             driver.manage().timeouts().implicitlyWait(Duration.ofMillis(0));
@@ -208,16 +210,15 @@ public class OptimizedWebScrapping {
                 return true;
             }
         } catch (TimeoutException ignored) {
-            // Modal not found in 200ms
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            // Restore the implicit wait
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         }
         return false;
     }
 
+    // Aceitar o popup do cookies
     private static void handleCookies(WebDriver driver) {
         try {
             WebElement cookieBanner = driver.findElement(By.id("onetrust-banner-sdk"));
@@ -230,7 +231,7 @@ public class OptimizedWebScrapping {
         }
     }
 
-
+    // Configurar o webdriver
     private static WebDriver getWebDriver() {
         System.setProperty("webdriver.chrome.driver", CHROME_DRIVEER_PATH);
         ChromeOptions options = new ChromeOptions();
@@ -278,10 +279,12 @@ public class OptimizedWebScrapping {
     }
 
 
+    // Função para debug.
     public static void doNothingToHaveABreakPoint(){
         return;
     }
 
+    // Função para adquirir todas as paginas
     public static int getTotalPages(WebDriver driver, String baseUrl, String departure, String destination, LocalDateTime departureDate, LocalDateTime returnDate, int adultsQt, FlightClass flightClass) {
         Integer totalPages = null;
         String url = baseUrl.replace("{{DEPARTURE_CITY_CODE}}", departure)
@@ -303,6 +306,7 @@ public class OptimizedWebScrapping {
         }
         return 0;
     }
+
 
     public static boolean openAndRetryInCaseOfFailure(WebDriver driver, WebElement updatedFlightElement, int maxRetries) {
         for(int selectFlightRetries = 0; selectFlightRetries < maxRetries; selectFlightRetries++) {
