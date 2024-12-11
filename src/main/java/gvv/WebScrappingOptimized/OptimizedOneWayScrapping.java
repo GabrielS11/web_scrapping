@@ -20,8 +20,10 @@ public class OptimizedOneWayScrapping {
     public static List<FlightOneWayData> processPage(WebDriver driver, String pageUrl, String departure, String destination, LocalDateTime date) {
 
         final List<FlightOneWayData> flights = new ArrayList<>();
+        // Define que o driver deve tentar durante 5 segundos procurar pelo elemento, se encontrar antes dos 5 segundos da resume, se não ignora o atual
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
         try {
+            // Tentativa de aceder a página em caso tenhamos alcançado o resource limit (erro 429) Aguarda 220 segundos para voltar ao normal.
             for(int i = 0; i < MAX_RETRIES; i++) {
                 driver.get(pageUrl);
                 String pageSource = driver.getPageSource();
@@ -31,8 +33,10 @@ public class OptimizedOneWayScrapping {
                     Thread.sleep(WAITING_TIME_SECONDS * 1000);
                 } else i = MAX_RETRIES;
             }
+
+            // Adquirir todos os voos da pagina principal e as informações normais
             List<WebElement> flightElements = driver.findElements(By.xpath("//li[contains(@class, 'List-module__item___TMd8E List-module__item--spacing-medium___foMk1')]"));
-            // Adquirir os valores a partir da página inicial
+
             flightElements.forEach(flightElement -> {
                 try {
                     FlightOneWayData flight = new FlightOneWayData();
@@ -68,14 +72,18 @@ public class OptimizedOneWayScrapping {
                     OptimizedWebScrapping.doNothingToHaveABreakPoint();
                 }
             });
-            // Abrir o modal e adquirir os dados extra necessários
+            // Para cada voo adquirido anteriormente, abrir o botão e invocar o modal para ver os detalhes do mesmo, paragens, avião, companhia e etc....
             return flights.stream().filter(flight -> {
                 try {
+                    // Adquirimos novamente o botão, em vez de usar o que ja tinhamos coletado, por causa que o DOM é atualizado constantemente.
                     String xpath = String.format(
                             "//li[contains(@class, 'List-module__item___TMd8E') and .//div[contains(text(), '%s')]]",
                             flight.getCompanyName()
                     );
                     WebElement updatedFlightElement = driver.findElement(By.xpath(xpath));
+
+                    // Tentar abrir o modal, e caso haja algum elemento na sua frente (do botão) remover o elemento, se n~ conseguir, votlar a tentar.
+                    // consultar a função para mais info
                     if (OptimizedWebScrapping.openAndRetryInCaseOfFailure(driver, updatedFlightElement, MAX_RETRIES)) return false;
                     List<WebElement> stopElements = driver.findElements(By.xpath("//div[contains(@class, 'TimelineSegment-module__legsWrapper___2VF5X')]//div[starts-with(@data-testid, 'timeline_leg_') and contains(@class, 'Frame-module__align-items_center___DCS7Y Frame-module__flex-direction_row___xHVKZ')]"));
                     for (int c = 1; c <= stopElements.size(); c++) {
@@ -112,12 +120,12 @@ public class OptimizedOneWayScrapping {
                                 System.out.println();
                             }
                         } catch (Exception ex) {
-                            //ex.printStackTrace();
                             OptimizedWebScrapping.doNothingToHaveABreakPoint();
                             return false;
                         }
                     }
                     try {
+                        // Fechar o modal para poder passar ao proximo elemento
                         WebElement closeButton = driver.findElement(By.xpath("//div[contains(@class, 'Overlay-module__content___+pCjC')]//button[@aria-label='Close']"));
                         closeButton.click();
                     } catch (Exception ex) {

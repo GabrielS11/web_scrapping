@@ -51,32 +51,40 @@ public class OptimizedWebScrapping {
 
 
     public static void startWebScrapping() {
+        // Número de Threads a ocorrer em simultâneo - Isto é irá acontecer o scrapping to ECONOMY E O PREMIUM_ECONOMY ao mesmo tempo, por exemplo
         final int maxThreadPool = 2;
         ExecutorService executor = Executors.newFixedThreadPool(maxThreadPool);
         List<Future<?>> tasks = new ArrayList<>();
 
         LocalDateTime currentTime = LocalDateTime.now();
+        // Hoje a 30 dias, será a data de partida do voo
         LocalDateTime departureDate = LocalDateTime.now().plusDays(30);
+        // Hoje a 34 dias será a data de retorno
         LocalDateTime returnDate = LocalDateTime.now().plusDays(34);
+
+        // Máximo de adultos a ser percorridos
         int adultsQt = 1;
 
 
-
+        // Percorrer todas as partidas
         for (String departureCityAirport : FLIGHTS.keySet()) {
             String departure = departureCityAirport.split(" - ")[0];
             String departureAirportName = departureCityAirport.split(" - ")[1];
+            // Percorrer todas os destinos de cada partida
             for (String[] destinationArr : FLIGHTS.get(departureCityAirport)) {
                 String destination = destinationArr[0];
                 String destinationAirportName = destinationArr[1];
-
+                // Percorrer todas as classes (consultar FLIGHTCLASS) dos voos, para cada destino
                 for (FlightClass flightClass : FlightClass.values()) {
                     tasks.add(executor.submit(() -> {
                         WebDriver driver = getWebDriver(); // Cada thread usa seu próprio WebDriver
                         try {
+                            // buscar o total de páginas daquela partida, para aquele destino e para aquela classe
                             int totalPages = getTotalPages(driver, ONE_WAY_URL, departure, destination, departureDate, LocalDateTime.now(), adultsQt, flightClass);
                             for (int page = 1; page <= totalPages; page++) {
                                 System.out.printf("Processing page %d/%d for %s -> %s [ONE WAY] [%s]%n", page, totalPages, departure, destination, flightClass.name().toUpperCase());
 
+                                // Preparar o URL
                                 String pageUrl = ONE_WAY_URL.replace("{{DEPARTURE_CITY_CODE}}", departure)
                                         .replace("{{ARRIVAL_CITY_CODE}}", destination)
                                         .replace("{{ADULTS_QUANTITY}}", String.valueOf(adultsQt))
@@ -84,6 +92,8 @@ public class OptimizedWebScrapping {
                                         .replace("{{DEPARTURE_DATE}}", departureDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                                         .replace("{{PAGE_NUMBER}}", String.valueOf(page));
 
+
+                                // Invocar o scrapping to OneWay - Ida apenas.
                                 List<FlightOneWayData> flights = OptimizedOneWayScrapping.processPage(driver, pageUrl, departure, destination, departureDate).stream().peek(flightData -> {
                                     flightData.setFlightClass(flightClass);
                                     flightData.setAdults(adultsQt);
@@ -103,8 +113,8 @@ public class OptimizedWebScrapping {
                                 writeToFile(writePath, "]",true);
                                 DatabaseHandler.processOneWay(flights);
                                 if (page < totalPages) {
-                                    System.out.println("Resetting limit (waiting " + (28000*maxThreadPool)/1000  +" seconds) before continuing...");
-                                    Thread.sleep(28000*maxThreadPool);
+                                    System.out.println("Resetting limit (waiting " + (35000*maxThreadPool)/1000  +" seconds) before continuing...");
+                                    Thread.sleep(35000*maxThreadPool);
                                 }
 
                             }
@@ -153,8 +163,8 @@ public class OptimizedWebScrapping {
                                 writeToFile(writePath, "]",true);
 
                                 if (page < totalPages) {
-                                    System.out.println("Resetting limit (waiting " + (28000*maxThreadPool)/1000 +" seconds) before continuing...");
-                                    Thread.sleep(28000*maxThreadPool);
+                                    System.out.println("Resetting limit (waiting " + (35000*maxThreadPool)/1000 +" seconds) before continuing...");
+                                    Thread.sleep(35000*maxThreadPool);
                                 }
                             }
 
@@ -297,22 +307,25 @@ public class OptimizedWebScrapping {
     public static boolean openAndRetryInCaseOfFailure(WebDriver driver, WebElement updatedFlightElement, int maxRetries) {
         for(int selectFlightRetries = 0; selectFlightRetries < maxRetries; selectFlightRetries++) {
             try {
+                // Enocntra o botão
                 WebElement selectFlightButton = updatedFlightElement.findElement(By.xpath(".//button[@data-testid='flight_card_bound_select_flight']"));
 
+                // Move-se o html até a zona do botão pois, não é permitido pelo DOM clicar num botão que não está na vista do utilizador.
                 ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", selectFlightButton);
                 selectFlightButton.click();
 
                 selectFlightRetries = maxRetries;
             } catch (ElementClickInterceptedException intercepted) {
+                // Caso dê erro, é porque tem uma loading screen na frente dele, então tentamos remover, e voltamos a tentar.
                 WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
                 wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("LoadingScreen-module__loadingScreen___TJHLs")));
             }
         }
-        if (OptimizedWebScrapping.removeNoFlightsModal(driver)) return true;
-        return false;
+        return OptimizedWebScrapping.removeNoFlightsModal(driver);
     }
 
 
+    // Inicialmente estavamos a guardar em JSON os dados, e não em Base de Dados.
     public static void writeToFile(String filePath, String content, boolean append) {
         File file = new File(filePath);
         try {
