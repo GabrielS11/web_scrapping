@@ -5,13 +5,16 @@ import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
 import jakarta.transaction.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
 
     private final EntityManager entityManager = Persistence.createEntityManagerFactory("default").createEntityManager();
     private final Class<T> entityType;
+    private final Map<String, T> cache = new HashMap<>();
 
     public BaseRepository(Class<T> entityType) {
         this.entityType = entityType;
@@ -64,4 +67,39 @@ public abstract class BaseRepository<T, ID> implements PDIRepository<T, ID> {
             entityManager.remove(entity);
         }
     }
+
+    @Override
+    public final T findOrCreate(String parameter, String value, T entity) {
+        T cachedEntity = cache.get(value);
+        if (cachedEntity != null) {
+            return cachedEntity;
+        }
+        String query = "SELECT e FROM " + entityType.getSimpleName() + " e WHERE e." + parameter + " = :value";
+        T existingEntity = entityManager.createQuery(query, entityType)
+                .setParameter("value", value)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+        if (existingEntity != null) {
+            return existingEntity;
+        }
+        return save(entity);
+    }
+
+    @Override
+    public final void initializeCache(String parameter) {
+        String query = "SELECT e FROM " + entityType.getSimpleName() + " e";
+        List<T> entities = entityManager.createQuery(query, entityType).getResultList();
+
+        for (T entity : entities) {
+            try {
+                String value = entityType.getDeclaredField(parameter).get(entity).toString();
+                cache.put(value, entity);
+            } catch (NoSuchFieldException | IllegalAccessException ignored) {
+
+            }
+        }
+    }
+
+
 }

@@ -9,4 +9,7 @@ public interface PDIRepository<T, ID> {
     List<T> findAll();
     T  update(T entity);
     void deleteById(ID id);
+    T findOrCreate(String parameter, String value, T entity);
+    void initializeCache(String parameter);
+
 }

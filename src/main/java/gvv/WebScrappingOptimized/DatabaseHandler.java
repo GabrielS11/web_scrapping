@@ -45,7 +45,6 @@ public class DatabaseHandler {
                         stopFlight.setName(stopFlight.getDepartureAirport().getCityFk().getCountryFk().getDescription() + " - " + stopFlight.getArrivalAirport().getCityFk().getCountryFk().getDescription());
                         flightStopRepository.save(stopFlight);
                     }
-
                 }
 
             } catch (Exception e) {
@@ -65,33 +64,36 @@ public class DatabaseHandler {
 
 
         // Departure
-        Country departureCountry = countryRepository.save(flight.getDepartureAirport().getCityFk().getCountryFk());
+        Country departureCountry = countryRepository.getOrCreate(flight.getDepartureAirport().getCityFk().getCountryFk());
         flight.getDepartureAirport().getCityFk().setCountryFk(departureCountry);
 
-        City departureCity = cityRepository.save(flight.getDepartureAirport().getCityFk());
+        City departureCity = cityRepository.getOrCreate(flight.getDepartureAirport().getCityFk());
         flight.getDepartureAirport().setCityFk(departureCity);
 
-        Airport departureAirport = airportRepository.save(flight.getDepartureAirport());
+        Airport departureAirport = airportRepository.getOrCreate(flight.getDepartureAirport());
 
         flight.setDepartureAirport(departureAirport);
 
 
         // Arrival
-        Country arrivalCountry = countryRepository.save(flight.getArrivalAirport().getCityFk().getCountryFk());
+        Country arrivalCountry = countryRepository.getOrCreate(flight.getArrivalAirport().getCityFk().getCountryFk());
         flight.getArrivalAirport().getCityFk().setCountryFk(arrivalCountry);
 
-        City arrivalCity = cityRepository.save(flight.getArrivalAirport().getCityFk());
+        City arrivalCity = cityRepository.getOrCreate(flight.getArrivalAirport().getCityFk());
         flight.getArrivalAirport().setCityFk(arrivalCity);
 
-        Airport arrivalAirport = airportRepository.save(flight.getArrivalAirport());
+        Airport arrivalAirport = airportRepository.getOrCreate(flight.getArrivalAirport());
 
         flight.setArrivalAirport(arrivalAirport);
 
 
-        Company company = companyRepository.save(flight.getAirplaneFk().getCompanyFk());
-        Airplane airplane = airplaneRepository.save(flight.getAirplaneFk());
-        airplane.setCompanyFk(company);
-        airplane.setCode(flight.getAirplaneFk().getCode());
+        Company company = companyRepository.getOrCreate(flight.getAirplaneFk().getCompanyFk());
+
+        flight.getAirplaneFk().setCompanyFk(company);
+        flight.getAirplaneFk().setCode(flight.getAirplaneFk().getCode());
+        Airplane airplane = airplaneRepository.getOrCreate(flight.getAirplaneFk());
+
+
         flight.setAirplaneFk(airplane);
 
 
@@ -103,35 +105,34 @@ public class DatabaseHandler {
 
 
         // Departure
-        Country departureCountry = countryRepository.save(stop.getDepartureAirport().getCityFk().getCountryFk());
+        Country departureCountry = countryRepository.getOrCreate(stop.getDepartureAirport().getCityFk().getCountryFk());
         stop.getDepartureAirport().getCityFk().setCountryFk(departureCountry);
 
-        City departureCity = cityRepository.save(stop.getDepartureAirport().getCityFk());
+        City departureCity = cityRepository.getOrCreate(stop.getDepartureAirport().getCityFk());
         stop.getDepartureAirport().setCityFk(departureCity);
 
-        Airport departureAirport = airportRepository.save(stop.getDepartureAirport());
+        Airport departureAirport = airportRepository.getOrCreate(stop.getDepartureAirport());
 
         stop.setDepartureAirport(departureAirport);
 
 
         // Arrival
-        Country arrivalCountry = countryRepository.save(stop.getArrivalAirport().getCityFk().getCountryFk());
+        Country arrivalCountry = countryRepository.getOrCreate(stop.getArrivalAirport().getCityFk().getCountryFk());
         stop.getArrivalAirport().getCityFk().setCountryFk(arrivalCountry);
 
-        City arrivalCity = cityRepository.save(stop.getArrivalAirport().getCityFk());
+        City arrivalCity = cityRepository.getOrCreate(stop.getArrivalAirport().getCityFk());
         stop.getArrivalAirport().setCityFk(arrivalCity);
 
-        Airport arrivalAirport = airportRepository.save(stop.getArrivalAirport());
+        Airport arrivalAirport = airportRepository.getOrCreate(stop.getArrivalAirport());
 
         stop.setArrivalAirport(arrivalAirport);
 
 
-        Company company = companyRepository.save(stop.getAirplaneFk().getCompanyFk());
-        Airplane airplane = airplaneRepository.save(stop.getAirplaneFk());
-        airplane.setCompanyFk(company);
-        airplane.setCode(stop.getAirplaneFk().getCode());
+        Company company = companyRepository.getOrCreate(stop.getAirplaneFk().getCompanyFk());
+        stop.getAirplaneFk().setCompanyFk(company);
+        stop.getAirplaneFk().setCode(stop.getAirplaneFk().getCode());
+        Airplane airplane = airplaneRepository.getOrCreate(stop.getAirplaneFk());
         stop.setAirplaneFk(airplane);
-
 
         return stop;
     }
