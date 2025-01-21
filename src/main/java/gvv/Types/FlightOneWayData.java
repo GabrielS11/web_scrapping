@@ -316,6 +316,7 @@ public class FlightOneWayData {
         trip.setOutwardDate(flight.getDepartureDate());
         trip.setRetrievedDate(this.retrievedDate.atZone(ZoneId.systemDefault()).toInstant());
         trip.setOutwardFlight(flight);
+        trip.setPrice(this.getOriginalPrice());
         return trip;
     }
 

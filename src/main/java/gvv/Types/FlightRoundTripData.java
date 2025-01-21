@@ -19,9 +19,18 @@ public class FlightRoundTripData {
 
     private FlightOneWayData flightOutward;
     private FlightOneWayData flightReturn;
+    private Double price;
 
     public String getDepartureCity() {
         return departureCity;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
     }
 
     public FlightRoundTripData setDepartureCity(String departureCity) {
@@ -120,6 +129,7 @@ public class FlightRoundTripData {
         Flight returnFlight = this.flightReturn.asFlight();
 
 
+        trip.setPrice(this.flightOutward.getDiscountPrice() != null ? this.flightOutward.getDiscountPrice() : this.flightOutward.getOriginalPrice());
         trip.setOutwardAirport(outwardFlight.getDepartureAirport());
         trip.setReturnAirport(returnFlight.getDepartureAirport());
 

@@ -35,7 +35,8 @@ public class OptimizedOneWayScrapping {
             }
 
             // Adquirir todos os voos da pagina principal e as informações normais
-            List<WebElement> flightElements = driver.findElements(By.xpath("//li[contains(@class, 'List-module__item___TMd8E List-module__item--spacing-medium___foMk1')]"));
+            // MUDOU
+            List<WebElement> flightElements = driver.findElements(By.xpath("//li[contains(@class, 'List-module__item___kAI01 List-module__item--spacing-medium___1XNek')]"));
 
             flightElements.forEach(flightElement -> {
                 try {
@@ -43,8 +44,8 @@ public class OptimizedOneWayScrapping {
                     flight.setDepartureCity(departure);
                     flight.setDestinationCity(destination);
 
-
-                    WebElement departureDestinationElement = flightElement.findElement(By.xpath(".//div[contains(@class, 'FlightCardBound-desktop-module__segmentDetails___1zsby')]//div[contains(@class, 'Stack-module__root___ohshd Stack-module__root--direction-row___3r3Pe Stack-module__root--grow-false___eaLO-')]"));
+                    // MUDOU v
+                    WebElement departureDestinationElement = flightElement.findElement(By.xpath(".//div[contains(@class, 'FlightCardBound-desktop-module__segmentDetails___1zsby')]//div[contains(@class, 'Stack-module__root___qzRAM Stack-module__root--direction-row___YN21i Stack-module__root--grow-false___-lc2K')]"));
                     String departureTime = departureDestinationElement.findElement(By.xpath(".//div[contains(@class, 'Frame-module__flex-direction_column___ms2of FlightCardSegment-desktop-module__timeDateBlock___0Voor') and contains(@style, 'text-align: left')]//div[@data-testid='flight_card_segment_departure_time_0']")).getText();
                     String departureDay = departureDestinationElement.findElement(By.xpath(".//div[contains(@class, 'Frame-module__flex-direction_column___ms2of FlightCardSegment-desktop-module__timeDateBlock___0Voor') and contains(@style, 'text-align: left')]//div[@data-testid='flight_card_segment_departure_date_0']")).getText();
 
@@ -55,11 +56,12 @@ public class OptimizedOneWayScrapping {
                     // verificar caso o mes seja menor q o mes de partida ent adicionar + 1 ano
                     flight.setDestinationDate(LocalDateTime.of(date.getYear(), OptimizedWebScrapping.getMonth(destinationDay.split(" ")[1]), Integer.parseInt(destinationDay.split(" ")[0]), Integer.parseInt(destinationTime.split(":")[0]), Integer.parseInt(destinationTime.split(":")[1])));
 
+                    // MUDOU v
                     flight.setIsDirect(
-                            departureDestinationElement.findElement(By.xpath(".//span[@data-testid='flight_card_segment_stops_0']//span[contains(@class, 'Badge-module__text___AGLG9')]")).getText().contains("Direct") ? "Y" : "N"
+                            departureDestinationElement.findElement(By.xpath(".//span[@data-testid='flight_card_segment_stops_0']//span[contains(@class, 'Badge-module__text___kQeft')]")).getText().contains("Direct") ? "Y" : "N"
                     );
-
-                    flight.setCompanyName(flightElement.findElement(By.xpath(".//div[@data-testid='flight_card_carrier_0']//div[contains(@class, 'Text-module__root--variant-small_1___An5P8')]")).getText());
+                    // mudou v
+                    flight.setCompanyName(flightElement.findElement(By.xpath(".//div[@data-testid='flight_card_carrier_0']//div[contains(@class, 'Text-module__root--variant-small_1___QnBhM')]")).getText());
 
                     String priceElement = flightElement.findElement(By.xpath(".//div[@data-testid='flight_card_price_main_price']")).getText().replace("€", "").replace(",", ".");
                     if (priceElement.contains("\n")) {
@@ -76,8 +78,10 @@ public class OptimizedOneWayScrapping {
             return flights.stream().filter(flight -> {
                 try {
                     // Adquirimos novamente o botão, em vez de usar o que ja tinhamos coletado, por causa que o DOM é atualizado constantemente.
+
+                    // MUDOU
                     String xpath = String.format(
-                            "//li[contains(@class, 'List-module__item___TMd8E') and .//div[contains(text(), '%s')]]",
+                            "//li[contains(@class, 'List-module__item___kAI01') and .//div[contains(text(), '%s')]]",
                             flight.getCompanyName()
                     );
                     WebElement updatedFlightElement = driver.findElement(By.xpath(xpath));
@@ -126,12 +130,14 @@ public class OptimizedOneWayScrapping {
                     }
                     try {
                         // Fechar o modal para poder passar ao proximo elemento
-                        WebElement closeButton = driver.findElement(By.xpath("//div[contains(@class, 'Overlay-module__content___+pCjC')]//button[@aria-label='Close']"));
+                        WebElement closeButton = driver.findElement(By.xpath("//div[contains(@class, 'Overlay-module__content___ez0Pr')]//button[@aria-label='Close']"));
                         closeButton.click();
                     } catch (Exception ex) {
+                        ex.printStackTrace();
                         OptimizedWebScrapping.doNothingToHaveABreakPoint();
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                     OptimizedWebScrapping.doNothingToHaveABreakPoint();
                     return false;
                 }

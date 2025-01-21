@@ -157,9 +157,6 @@ public class DatabaseHandler {
 
         Company company = companyRepository.getOrCreate(flight.getAirplaneFk().getCompanyFk());
         flight.getAirplaneFk().setCompanyFk(company);
-        if(flight.getAirplaneFk().getCode() == null){
-            System.out.println();
-        }
         Airplane airplane = airplaneRepository.getOrCreate(flight.getAirplaneFk());
         flight.setAirplaneFk(airplane);
 

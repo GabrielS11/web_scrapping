@@ -43,6 +43,30 @@ public class Trip {
     @Transient
     private Flight returnFlight; // retorno
 
+    @ColumnDefault("'N'")
+    @Column(name = "dp", length = 1)
+    private String dp;
+
+    @ColumnDefault("0")
+    @Column(name = "price")
+    private Double price;
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public String getDp() {
+        return dp;
+    }
+
+    public void setDp(String dp) {
+        this.dp = dp;
+    }
+
     public Flight getOutwardFlight() {
         return outwardFlight;
     }
